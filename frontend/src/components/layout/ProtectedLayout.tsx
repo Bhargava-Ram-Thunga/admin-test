@@ -32,19 +32,19 @@ export const ProtectedLayout = () => {
   }
 
   return (
-    <div className="flex h-screen bg-[#F5F7FA] font-sans text-slate-800">
+    <div className="flex h-screen bg-[#F0F7FF] font-sans text-slate-800">
       <Sidebar user={user} />
       <main className="flex-1 overflow-y-auto p-4 lg:p-8 lg:ml-20">
         <header className="flex justify-between items-center mb-8">
           <div>
-            <h2 className="text-2xl font-bold text-[#393D7E]">
+            <h2 className="text-2xl font-bold text-[#6366f1]">
               Welcome, {user.name}
             </h2>
-            <p className="text-[#5459AC] text-sm">{user.role}</p>
+            <p className="text-[#6366f1]/70 text-sm">{user.role}</p>
           </div>
           <div className="flex items-center gap-4">
             <div className="text-right hidden sm:block">
-              <p className="font-bold text-[#393D7E] text-sm">
+              <p className="font-bold text-[#6366f1] text-sm">
                 {new Date().toLocaleDateString("en-US", {
                   weekday: "long",
                   year: "numeric",
@@ -55,7 +55,7 @@ export const ProtectedLayout = () => {
             </div>
             <img
               src={`https://i.pravatar.cc/150?u=${user.email}`}
-              className="w-10 h-10 rounded-xl border-2 border-[#393D7E]"
+              className="w-10 h-10 rounded-xl border-2 border-[#6366f1]"
               alt="Profile"
             />
           </div>

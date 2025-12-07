@@ -26,8 +26,6 @@ export const Sidebar = ({ user }: SidebarProps) => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Fix: Using pl-[30px] to center the 20px icon in the 80px (w-20) collapsed sidebar
-  // (80px - 20px) / 2 = 30px padding on each side
   const NavItem = ({ icon: Icon, label, id }: any) => {
     const isActive = location.pathname.includes(id);
 
@@ -37,19 +35,17 @@ export const Sidebar = ({ user }: SidebarProps) => {
           navigate(`/${id}`);
           setMobileOpen(false);
         }}
-        className={`w-full flex items-center gap-4 py-3 mb-1 transition-all rounded-xl cursor-pointer pl-[18px] ${
-          isActive
-            ? "bg-[#6DC3BB] text-white shadow-md"
-            : "text-slate-300 hover:bg-white/10 hover:text-white"
-        } `}
+        className={`w-full flex items-center gap-4 py-3 mb-1 transition-all rounded-xl cursor-pointer pl-[18px] ${isActive
+            ? "bg-white text-[#3b82f6] shadow-md"
+            : "text-white/70 hover:bg-white/10 hover:text-white"
+          } `}
       >
         <div className="transition-all min-w-[20px]">
           <Icon size={20} className="min-w-[20px]" />
         </div>
         <span
-          className={`text-sm font-medium whitespace-nowrap overflow-hidden transition-all duration-300 ${
-            isExpanded ? "w-auto opacity-100 ml-0" : "w-0 opacity-0 -ml-4"
-          }`}
+          className={`text-sm font-medium whitespace-nowrap overflow-hidden transition-all duration-300 ${isExpanded ? "w-auto opacity-100 ml-0" : "w-0 opacity-0 -ml-4"
+            }`}
         >
           {label}
         </span>
@@ -59,9 +55,8 @@ export const Sidebar = ({ user }: SidebarProps) => {
 
   const SectionLabel = ({ label }: { label: string }) => (
     <p
-      className={`text-xs font-bold text-white/40 uppercase mb-4 tracking-wider pl-[18px] whitespace-nowrap transition-all duration-300 ease-in-out ${
-        isExpanded ? "opacity-100" : "opacity-0"
-      }`}
+      className={`text-xs font-bold text-white/40 uppercase mb-4 tracking-wider pl-[18px] whitespace-nowrap transition-all duration-300 ease-in-out ${isExpanded ? "opacity-100" : "opacity-0"
+        }`}
     >
       {label}
     </p>
@@ -73,7 +68,7 @@ export const Sidebar = ({ user }: SidebarProps) => {
       <div className="fixed top-4 left-4 z-50 lg:hidden">
         <button
           onClick={() => setMobileOpen(!mobileOpen)}
-          className="p-2 bg-[#393D7E] text-white rounded-lg shadow-lg"
+          className="p-2 bg-[#6366f1] text-white rounded-lg shadow-lg"
         >
           {mobileOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
@@ -90,22 +85,20 @@ export const Sidebar = ({ user }: SidebarProps) => {
       <div
         onMouseEnter={() => setIsExpanded(true)}
         onMouseLeave={() => setIsExpanded(false)}
-        className={`fixed left-0 top-0 h-screen bg-[#393D7E] text-white z-50 flex flex-col transition-all duration-300 ease-in-out shadow-2xl 
-                ${
-                  mobileOpen
-                    ? "translate-x-0 w-64"
-                    : "-translate-x-full lg:translate-x-0"
-                } 
+        className={`fixed left-0 top-0 h-screen bg-[#6366f1] text-white z-50 flex flex-col transition-all duration-300 ease-in-out shadow-2xl 
+                ${mobileOpen
+            ? "translate-x-0 w-64"
+            : "-translate-x-full lg:translate-x-0"
+          } 
                 ${isExpanded ? "lg:w-64" : "lg:w-20"}`}
       >
         <div className="p-6 flex items-center gap-3 transition-all pl-6">
-          <div className="w-8 h-8 bg-gradient-to-tr from-[#6DC3BB] to-[#5459AC] rounded-lg flex-shrink-0 flex items-center justify-center text-white font-bold shadow-lg shadow-[#6DC3BB]/30">
+          <div className="w-8 h-8 bg-gradient-to-tr from-white to-[#3b82f6] rounded-lg flex-shrink-0 flex items-center justify-center text-[#6366f1] font-bold shadow-lg shadow-black/20">
             K
           </div>
           <span
-            className={`font-bold text-xl tracking-tight text-white whitespace-nowrap overflow-hidden transition-all duration-300 ${
-              isExpanded ? "w-auto opacity-100" : "w-0 opacity-0"
-            }`}
+            className={`font-bold text-xl tracking-tight text-white whitespace-nowrap overflow-hidden transition-all duration-300 ${isExpanded ? "w-auto opacity-100" : "w-0 opacity-0"
+              }`}
           >
             KodingC.
           </span>
@@ -129,7 +122,7 @@ export const Sidebar = ({ user }: SidebarProps) => {
         <div className="p-3 space-y-1 mb-4">
           <NavItem icon={Settings} label="Settings" id="settings" />
           <button
-            className={`w-full flex items-center gap-4 py-3 text-[#F2AEBB] hover:text-white hover:bg-white/10 rounded-xl transition-all text-sm font-medium pl-[18px]`}
+            className={`w-full flex items-center gap-4 py-3 text-[#3498db] hover:text-white hover:bg-white/10 rounded-xl transition-all text-sm font-medium pl-[18px]`}
             onClick={() => {
               import("../../utils/auth").then(({ clearSession }) => {
                 clearSession();
@@ -139,9 +132,8 @@ export const Sidebar = ({ user }: SidebarProps) => {
           >
             <LogOut size={20} className="min-w-[20px]" />
             <span
-              className={`whitespace-nowrap overflow-hidden transition-all duration-300 ${
-                isExpanded ? "w-auto opacity-100" : "w-0 opacity-0"
-              }`}
+              className={`whitespace-nowrap overflow-hidden transition-all duration-300 ${isExpanded ? "w-auto opacity-100" : "w-0 opacity-0"
+                }`}
             >
               Log Out
             </span>

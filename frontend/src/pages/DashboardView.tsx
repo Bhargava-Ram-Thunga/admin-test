@@ -32,8 +32,8 @@ export const DashboardView = ({ user, students }: DashboardViewProps) => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-[#393D7E]">Dashboard</h1>
-          <p className="text-[#5459AC] mt-1">Overview for {user.role}</p>
+          <h1 className="text-3xl font-bold text-[#6366f1]">Dashboard</h1>
+          <p className="text-[#6366f1]/70 mt-1">Overview for {user.role}</p>
         </div>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -42,23 +42,23 @@ export const DashboardView = ({ user, students }: DashboardViewProps) => {
           value={scopedStudents.length}
           label="Total Students"
           trend="+12%"
-          colorClass="bg-gradient-to-br from-white to-[#E0F2F1] border-[#6DC3BB]/20"
-          iconBgClass="bg-[#6DC3BB] shadow-lg shadow-[#6DC3BB]/40"
-          trendClass="bg-[#6DC3BB] text-white"
+          colorClass="bg-white border-[#3498db]/20 shadow-lg shadow-[#3b82f6]/5"
+          iconBgClass="bg-[#2c80ff] shadow-lg shadow-[#2c80ff]/30 text-white"
+          trendClass="bg-[#F2AEBB]/20 text-[#696FC7]"
         />
         <StatCard
           icon={DollarSign}
           value={`₹ ${totalRev.toLocaleString("en-IN")}`}
           label="Total Revenue"
           trend="+8%"
-          colorClass="bg-gradient-to-br from-white to-[#E8EAF6] border-[#5459AC]/20"
-          iconBgClass="bg-[#5459AC] shadow-lg shadow-[#5459AC]/40"
-          trendClass="bg-[#6DC3BB] text-white"
+          colorClass="bg-white border-[#3498db]/20 shadow-lg shadow-[#3b82f6]/5"
+          iconBgClass="bg-[#A7AAE1] shadow-lg shadow-[#A7AAE1]/30 text-white"
+          trendClass="bg-[#F2AEBB]/20 text-[#696FC7]"
         />
-        <Card className="col-span-1 md:col-span-2 bg-gradient-to-r from-[#393D7E] to-[#5459AC] text-white relative overflow-hidden border-none shadow-xl shadow-[#393D7E]/20">
+        <Card className="col-span-1 md:col-span-2 bg-gradient-to-r from-[#6366f1] to-[#3b82f6] text-white relative overflow-hidden border-none shadow-xl shadow-[#3b82f6]/20">
           <div className="relative z-10">
             <h3 className="text-xl font-bold mb-1">Trainer Utilization</h3>
-            <p className="text-[#6DC3BB] text-sm mb-4">
+            <p className="text-white/80 text-sm mb-4">
               85% of trainers are currently active in sessions.
             </p>
             <div className="flex gap-2">
@@ -67,11 +67,11 @@ export const DashboardView = ({ user, students }: DashboardViewProps) => {
                   <img
                     key={i}
                     src={`https://i.pravatar.cc/100?u=t${i}`}
-                    className="w-8 h-8 rounded-full border-2 border-[#393D7E]"
+                    className="w-8 h-8 rounded-full border-2 border-white/20"
                   />
                 ))}
               </div>
-              <button className="text-xs bg-white/10 hover:bg-white/20 px-3 py-1 rounded-lg backdrop-blur-sm transition text-[#F2AEBB]">
+              <button className="text-xs bg-white/10 hover:bg-white/20 px-3 py-1 rounded-lg backdrop-blur-sm transition text-white font-medium">
                 View Details
               </button>
             </div>
@@ -85,10 +85,10 @@ export const DashboardView = ({ user, students }: DashboardViewProps) => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card className="lg:col-span-2">
           <div className="flex justify-between items-center mb-6">
-            <h3 className="font-bold text-lg text-[#393D7E]">
+            <h3 className="font-bold text-lg text-[#6366f1]">
               Revenue Analytics
             </h3>
-            <select className="bg-[#F5F7FA] border-none text-xs font-bold text-[#5459AC] rounded-lg py-1 px-2 outline-none cursor-pointer">
+            <select className="bg-[#F0F7FF] border-none text-xs font-bold text-[#6366f1] rounded-lg py-1 px-2 outline-none cursor-pointer">
               <option>This Week</option>
               <option>Last Month</option>
             </select>
@@ -98,8 +98,8 @@ export const DashboardView = ({ user, students }: DashboardViewProps) => {
               <AreaChart data={REVENUE_DATA}>
                 <defs>
                   <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#6DC3BB" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#6DC3BB" stopOpacity={0} />
+                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <Tooltip
@@ -107,6 +107,8 @@ export const DashboardView = ({ user, students }: DashboardViewProps) => {
                     borderRadius: "12px",
                     border: "none",
                     boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                    backgroundColor: "#FFFFFF",
+                    color: "#6366f1"
                   }}
                   formatter={(value: any) =>
                     `₹ ${value.toLocaleString("en-IN")}`
@@ -115,7 +117,7 @@ export const DashboardView = ({ user, students }: DashboardViewProps) => {
                 <Area
                   type="monotone"
                   dataKey="revenue"
-                  stroke="#6DC3BB"
+                  stroke="#3b82f6"
                   strokeWidth={3}
                   fill="url(#colorRev)"
                 />
@@ -124,7 +126,7 @@ export const DashboardView = ({ user, students }: DashboardViewProps) => {
           </div>
         </Card>
         <Card>
-          <h3 className="font-bold text-lg text-[#393D7E] mb-6">
+          <h3 className="font-bold text-lg text-[#6366f1] mb-6">
             Student Status
           </h3>
           <div className="h-48 flex justify-center">
@@ -141,21 +143,22 @@ export const DashboardView = ({ user, students }: DashboardViewProps) => {
                   paddingAngle={5}
                   dataKey="value"
                 >
-                  <Cell fill={THEME.teal} /> <Cell fill={THEME.pink} />{" "}
-                  <Cell fill={THEME.indigo} />
+                  <Cell fill={THEME.colors.primary.teal} />
+                  <Cell fill={THEME.colors.primary.pink} />
+                  <Cell fill={THEME.colors.primary.indigo} />
                 </Pie>
               </PieChart>
             </ResponsiveContainer>
           </div>
-          <div className="flex justify-center gap-4 mt-4 text-xs font-bold text-[#5459AC]">
+          <div className="flex justify-center gap-4 mt-4 text-xs font-bold text-[#6366f1]">
             <div className="flex items-center gap-1">
-              <div className="w-2 h-2 rounded-full bg-[#6DC3BB]"></div>Active
+              <div className="w-2 h-2 rounded-full bg-[#3b82f6]"></div>Active
             </div>
             <div className="flex items-center gap-1">
-              <div className="w-2 h-2 rounded-full bg-[#F2AEBB]"></div>Dropped
+              <div className="w-2 h-2 rounded-full bg-[#8b5cf6]"></div>Dropped
             </div>
             <div className="flex items-center gap-1">
-              <div className="w-2 h-2 rounded-full bg-[#5459AC]"></div>Done
+              <div className="w-2 h-2 rounded-full bg-[#3498db]"></div>Done
             </div>
           </div>
         </Card>

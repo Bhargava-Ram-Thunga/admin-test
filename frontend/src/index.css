@@ -1,1 +1,12 @@
 @import "tailwindcss";
+
+:root {
+  --color-primary-purple: #6366f1;
+  /* Indigo */
+  --color-accent-blue: #3498db;
+  /* Light Blue */
+  --color-bg-light: #F0F7FF;
+  /* Soft Blue */
+  --color-secondary-purple: #8b5cf6;
+  /* Tailwind Purple */
+}

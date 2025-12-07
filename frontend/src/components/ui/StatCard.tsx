@@ -35,9 +35,9 @@ export const StatCard = ({
                     </span>
                 )}
             </div>
-            <h3 className="text-3xl font-bold text-[#393D7E]">{value}</h3>
-            <p className="text-sm font-bold text-[#5459AC]/80 mt-1">{label}</p>
+            <h3 className="text-3xl font-bold text-[#6366f1]">{value}</h3>
+            <p className="text-sm font-bold text-[#6366f1]/70 mt-1">{label}</p>
         </div>
-        <div className="absolute -right-6 -bottom-6 w-32 h-32 rounded-full bg-white/10 blur-2xl"></div>
+        <div className="absolute -right-6 -bottom-6 w-32 h-32 rounded-full bg-[#3b82f6]/5 blur-2xl"></div>
     </div>
 );
