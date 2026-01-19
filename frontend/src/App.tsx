@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Routes, Route, Navigate, useOutletContext } from "react-router-dom";
 import { Toast } from "./components/ui/Toast";
 import { Login } from "./pages/Login";
@@ -11,6 +11,8 @@ import { FinanceView } from "./pages/FinanceView";
 import { SafetyView } from "./pages/SafetyView";
 import { CoursesView } from "./pages/CoursesView";
 import { SettingsView } from "./pages/SettingsView";
+import { AllocationsView } from "./pages/AllocationsView";
+import { SessionsView } from "./pages/SessionsView";
 import { INITIAL_STUDENTS, MOCK_TRAINERS } from "./data/mockData";
 import {
   ProtectedLayout,
@@ -102,6 +104,17 @@ export default function App() {
     return <SettingsView user={user} />;
   };
 
+  // New Wrappers
+  const AllocationsWrapper = () => {
+    const { user } = useOutletContext<AuthContextType>();
+    return <AllocationsView user={user} />;
+  };
+
+  const SessionsWrapper = () => {
+    const { user } = useOutletContext<AuthContextType>();
+    return <SessionsView user={user} />;
+  };
+
   return (
     <>
       <div className="fixed top-4 right-4 z-50 flex flex-col gap-2 pointer-events-none">
@@ -122,6 +135,8 @@ export default function App() {
           <Route path="/students" element={<StudentsWrapper />} />
           <Route path="/trainers" element={<TrainersWrapper />} />
           <Route path="/regions" element={<RegionsWrapper />} />
+          <Route path="/allocations" element={<AllocationsWrapper />} />
+          <Route path="/sessions" element={<SessionsWrapper />} />
           <Route path="/finance" element={<FinanceWrapper />} />
           <Route path="/safety" element={<SafetyWrapper />} />
           <Route path="/courses" element={<CoursesWrapper />} />

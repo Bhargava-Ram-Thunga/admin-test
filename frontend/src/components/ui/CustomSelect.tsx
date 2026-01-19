@@ -21,7 +21,7 @@ export const CustomSelect = ({
 }: CustomSelectProps) => (
     <div className="flex flex-col gap-1 w-full min-w-[140px]">
         <label
-            className={`text-[10px] font-bold uppercase tracking-wider pl-1 ${disabled ? "text-gray-300" : "text-[#393D7E]/50"
+            className={`text-[10px] font-bold uppercase tracking-wider pl-1 ${disabled ? "text-gray-300" : "text-[#4D2B8C]/50"
                 }`}
         >
             {label}
@@ -31,8 +31,8 @@ export const CustomSelect = ({
                 <Icon
                     size={14}
                     className={`absolute left-3 top-1/2 -translate-y-1/2 transition-colors ${disabled
-                            ? "text-gray-300"
-                            : "text-[#393D7E]/40 group-hover:text-[#5459AC]"
+                        ? "text-gray-300"
+                        : "text-[#4D2B8C]/40 group-hover:text-[#F39EB6]"
                         }`}
                 />
             )}
@@ -44,7 +44,7 @@ export const CustomSelect = ({
                     } pr-8 outline-none transition-all cursor-pointer shadow-sm
               ${disabled
                         ? "border-gray-100 text-gray-300 cursor-not-allowed"
-                        : "border-[#393D7E]/10 text-[#393D7E] hover:bg-[#F5F7FA] focus:ring-2 focus:ring-[#5459AC]"
+                        : "border-[#4D2B8C]/10 text-[#4D2B8C] hover:bg-[#F5F7FA] focus:ring-2 focus:ring-[#F39EB6]"
                     }`}
             >
                 {placeholder && (
@@ -60,7 +60,7 @@ export const CustomSelect = ({
             </select>
             <ChevronDown
                 size={14}
-                className={`absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none ${disabled ? "text-gray-300" : "text-[#393D7E]/40"
+                className={`absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none ${disabled ? "text-gray-300" : "text-[#4D2B8C]/40"
                     }`}
             />
         </div>

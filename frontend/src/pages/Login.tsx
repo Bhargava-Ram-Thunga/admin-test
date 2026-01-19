@@ -30,7 +30,7 @@ export const Login = () => {
   };
 
   return (
-    <div className="min-h-screen w-full flex flex-col md:flex-row bg-[#24274A] relative">
+    <div className="min-h-screen w-full flex flex-col md:flex-row bg-[#4D2B8C] relative">
       {/* LEFT SIDE - IMAGE/GRADIENT */}
       <div className="md:w-1/2 relative hidden md:flex flex-col justify-between p-12 lg:p-16 text-white overflow-hidden">
         <div
@@ -45,7 +45,7 @@ export const Login = () => {
         ></div>
         <div className="relative z-20">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-[#393D7E] font-bold text-xl">
+            <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-[#4D2B8C] font-bold text-xl">
               K
             </div>
             <span className="font-bold text-2xl tracking-wide">KodingC.</span>
@@ -69,7 +69,7 @@ export const Login = () => {
       </div>
 
       {/* RIGHT SIDE - LOGIN FORM */}
-      <div className="w-full md:w-1/2 p-8 md:p-12 lg:p-24 flex flex-col justify-center bg-[#24274A] relative z-20">
+      <div className="w-full md:w-1/2 p-8 md:p-12 lg:p-24 flex flex-col justify-center bg-[#4D2B8C] relative z-20">
         <div className="max-w-md mx-auto w-full">
           <h2 className="text-4xl font-bold text-white mb-3">Welcome back</h2>
           <p className="text-slate-400 text-base mb-10">
@@ -77,7 +77,7 @@ export const Login = () => {
           </p>
           <form onSubmit={handleLogin} className="space-y-6">
             {error && (
-              <div className="p-4 bg-[#F2AEBB]/10 border border-[#F2AEBB]/20 text-[#F2AEBB] text-sm rounded-xl font-bold">
+              <div className="p-4 bg-[#F39EB6]/10 border border-[#F39EB6]/20 text-[#F39EB6] text-sm rounded-xl font-bold">
                 {error}
               </div>
             )}
@@ -89,7 +89,7 @@ export const Login = () => {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full p-4 bg-[#1E2140] border border-[#393D7E] rounded-xl outline-none focus:border-[#6DC3BB] transition text-white placeholder-slate-600 text-base font-medium"
+                className="w-full p-4 bg-[#4D2B8C]/50 border border-[#ffffff]/20 rounded-xl outline-none focus:border-[#F39EB6] transition text-white placeholder-slate-300 text-base font-medium"
                 placeholder="Enter your email"
               />
             </div>
@@ -102,7 +102,7 @@ export const Login = () => {
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full p-4 bg-[#1E2140] border border-[#393D7E] rounded-xl outline-none focus:border-[#6DC3BB] transition text-white placeholder-slate-600 text-base font-medium"
+                  className="w-full p-4 bg-[#4D2B8C]/50 border border-[#ffffff]/20 rounded-xl outline-none focus:border-[#F39EB6] transition text-white placeholder-slate-300 text-base font-medium"
                   placeholder="Enter your password"
                 />
                 <button
@@ -117,15 +117,15 @@ export const Login = () => {
               <label className="flex items-center gap-2 text-slate-400 cursor-pointer">
                 <input
                   type="checkbox"
-                  className="rounded bg-[#1E2140] border-[#393D7E] text-[#6DC3BB] focus:ring-0 w-4 h-4"
+                  className="rounded bg-[#4D2B8C]/50 border-[#ffffff]/20 text-[#F39EB6] focus:ring-0 w-4 h-4"
                 />
                 <span>Remember me</span>
               </label>
-              <a href="#" className="text-[#6DC3BB] hover:underline font-bold">
+              <a href="#" className="text-[#F39EB6] hover:underline font-bold">
                 Forgot password?
               </a>
             </div>
-            <button className="w-full py-4 bg-[#5459AC] hover:bg-[#6DC3BB] text-white font-bold rounded-xl transition shadow-lg shadow-[#5459AC]/30 flex items-center justify-center gap-2 group text-lg mt-4">
+            <button className="w-full py-4 bg-[#F39EB6] hover:bg-[#F39EB6]/90 text-white font-bold rounded-xl transition shadow-lg shadow-[#F39EB6]/30 flex items-center justify-center gap-2 group text-lg mt-4">
               Sign in{" "}
               <ArrowRight
                 size={20}
@@ -135,7 +135,7 @@ export const Login = () => {
           </form>
           <p className="mt-10 text-center text-sm text-slate-500">
             Don't have an account?{" "}
-            <span className="text-[#6DC3BB] font-bold cursor-pointer hover:underline">
+            <span className="text-[#F39EB6] font-bold cursor-pointer hover:underline">
               Request Access
             </span>
           </p>
@@ -146,7 +146,7 @@ export const Login = () => {
           <button
             key={u.email}
             onClick={() => setEmail(u.email)}
-            className="text-[10px] bg-[#1E2140] border border-[#393D7E] hover:bg-[#5459AC] px-3 py-1.5 rounded-lg text-white transition font-medium whitespace-nowrap"
+            className="text-[10px] bg-[#4D2B8C]/50 border border-[#ffffff]/20 hover:bg-[#F39EB6] px-3 py-1.5 rounded-lg text-white transition font-medium whitespace-nowrap"
           >
             {u.role}
           </button>

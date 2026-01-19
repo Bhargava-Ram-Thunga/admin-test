@@ -20,6 +20,7 @@ interface DashboardViewProps {
   students: Student[];
 }
 
+
 export const DashboardView = ({ user, students }: DashboardViewProps) => {
   const scopedStudents = students.filter((s) =>
     checkPermission(user, s.regionId)
@@ -29,33 +30,33 @@ export const DashboardView = ({ user, students }: DashboardViewProps) => {
     0
   );
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-[#6366f1]">Dashboard</h1>
-          <p className="text-[#6366f1]/70 mt-1">Overview for {user.role}</p>
+          <h1 className="text-3xl font-bold text-[#4D2B8C]">Dashboard</h1>
+          <p className="text-[#4D2B8C]/70 mt-1">Overview for {user.role}</p>
         </div>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           icon={Users}
           value={scopedStudents.length}
           label="Total Students"
           trend="+12%"
-          colorClass="bg-white border-[#3498db]/20 shadow-lg shadow-[#3b82f6]/5"
-          iconBgClass="bg-[#2c80ff] shadow-lg shadow-[#2c80ff]/30 text-white"
-          trendClass="bg-[#F2AEBB]/20 text-[#696FC7]"
+          colorClass="bg-white border-[#F39EB6]/20 shadow-lg shadow-[#4D2B8C]/5"
+          iconBgClass="bg-[#4D2B8C] shadow-lg shadow-[#4D2B8C]/30 text-white"
+          trendClass="bg-[#F39EB6]/20 text-[#4D2B8C]"
         />
         <StatCard
           icon={DollarSign}
           value={`₹ ${totalRev.toLocaleString("en-IN")}`}
           label="Total Revenue"
           trend="+8%"
-          colorClass="bg-white border-[#3498db]/20 shadow-lg shadow-[#3b82f6]/5"
-          iconBgClass="bg-[#A7AAE1] shadow-lg shadow-[#A7AAE1]/30 text-white"
-          trendClass="bg-[#F2AEBB]/20 text-[#696FC7]"
+          colorClass="bg-white border-[#F39EB6]/20 shadow-lg shadow-[#4D2B8C]/5"
+          iconBgClass="bg-[#F39EB6] shadow-lg shadow-[#F39EB6]/30 text-white"
+          trendClass="bg-[#F39EB6]/20 text-[#4D2B8C]"
         />
-        <Card className="col-span-1 md:col-span-2 bg-gradient-to-r from-[#6366f1] to-[#3b82f6] text-white relative overflow-hidden border-none shadow-xl shadow-[#3b82f6]/20">
+        <Card className="col-span-1 md:col-span-2 bg-[#4D2B8C] text-white relative overflow-hidden border-none shadow-xl shadow-[#4D2B8C]/20">
           <div className="relative z-10">
             <h3 className="text-xl font-bold mb-1">Trainer Utilization</h3>
             <p className="text-white/80 text-sm mb-4">
@@ -82,24 +83,24 @@ export const DashboardView = ({ user, students }: DashboardViewProps) => {
           />
         </Card>
       </div>
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <Card className="lg:col-span-2">
           <div className="flex justify-between items-center mb-6">
-            <h3 className="font-bold text-lg text-[#6366f1]">
+            <h3 className="font-bold text-lg text-[#4D2B8C]">
               Revenue Analytics
             </h3>
-            <select className="bg-[#F0F7FF] border-none text-xs font-bold text-[#6366f1] rounded-lg py-1 px-2 outline-none cursor-pointer">
+            <select className="bg-[#F0F7FF] border-none text-xs font-bold text-[#4D2B8C] rounded-lg py-1 px-2 outline-none cursor-pointer">
               <option>This Week</option>
               <option>Last Month</option>
             </select>
           </div>
-          <div className="h-64">
+          <div className="h-56">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={REVENUE_DATA}>
                 <defs>
                   <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                    <stop offset="5%" stopColor="#4D2B8C" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#4D2B8C" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <Tooltip
@@ -108,7 +109,7 @@ export const DashboardView = ({ user, students }: DashboardViewProps) => {
                     border: "none",
                     boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
                     backgroundColor: "#FFFFFF",
-                    color: "#6366f1"
+                    color: "#4D2B8C"
                   }}
                   formatter={(value: any) =>
                     `₹ ${value.toLocaleString("en-IN")}`
@@ -117,7 +118,7 @@ export const DashboardView = ({ user, students }: DashboardViewProps) => {
                 <Area
                   type="monotone"
                   dataKey="revenue"
-                  stroke="#3b82f6"
+                  stroke="#4D2B8C"
                   strokeWidth={3}
                   fill="url(#colorRev)"
                 />
@@ -126,10 +127,10 @@ export const DashboardView = ({ user, students }: DashboardViewProps) => {
           </div>
         </Card>
         <Card>
-          <h3 className="font-bold text-lg text-[#6366f1] mb-6">
+          <h3 className="font-bold text-lg text-[#4D2B8C] mb-6">
             Student Status
           </h3>
-          <div className="h-48 flex justify-center">
+          <div className="h-40 flex justify-center">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
@@ -150,12 +151,12 @@ export const DashboardView = ({ user, students }: DashboardViewProps) => {
               </PieChart>
             </ResponsiveContainer>
           </div>
-          <div className="flex justify-center gap-4 mt-4 text-xs font-bold text-[#6366f1]">
+          <div className="flex justify-center gap-4 mt-4 text-xs font-bold text-[#4D2B8C]">
             <div className="flex items-center gap-1">
-              <div className="w-2 h-2 rounded-full bg-[#3b82f6]"></div>Active
+              <div className="w-2 h-2 rounded-full bg-[#4D2B8C]"></div>Active
             </div>
             <div className="flex items-center gap-1">
-              <div className="w-2 h-2 rounded-full bg-[#8b5cf6]"></div>Dropped
+              <div className="w-2 h-2 rounded-full bg-[#F39EB6]"></div>Dropped
             </div>
             <div className="flex items-center gap-1">
               <div className="w-2 h-2 rounded-full bg-[#3498db]"></div>Done

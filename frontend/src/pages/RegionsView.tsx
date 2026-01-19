@@ -58,7 +58,7 @@ export const RegionsView = ({ user, students }: RegionsViewProps) => {
       return null;
     };
 
-    let searchRoot = MOCK_HIERARCHY;
+    let searchRoot = MOCK_HIERARCHY as HierarchyNode[];
     if (user.regionId !== "ALL") {
       const adminNode = findNode(MOCK_HIERARCHY, user.regionId);
       // We only search within the adminNode's children
@@ -113,17 +113,17 @@ export const RegionsView = ({ user, students }: RegionsViewProps) => {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-[#393D7E]">
+        <h1 className="text-2xl font-bold text-[#4D2B8C]">
           Regional Data Explorer
         </h1>
         {user.regionId === "ALL" && (
-          <button className="bg-[#393D7E] text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-[#5459AC] transition shadow-lg shadow-[#393D7E]/20">
+          <button className="bg-[#4D2B8C] text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-[#F39EB6] transition shadow-lg shadow-[#4D2B8C]/20">
             <Plus size={16} className="inline mr-1" /> Add Region
           </button>
         )}
       </div>
 
-      <div className="bg-white p-6 rounded-3xl shadow-lg border border-[#393D7E]/5 flex flex-col md:flex-row items-center gap-6 justify-between">
+      <div className="bg-white p-6 rounded-3xl shadow-lg border border-[#4D2B8C]/5 flex flex-col md:flex-row items-center gap-6 justify-between">
         <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
           {/* DROPDOWN 1: HIERARCHY LEVEL */}
           <CustomSelect
@@ -142,28 +142,25 @@ export const RegionsView = ({ user, students }: RegionsViewProps) => {
           {/* DROPDOWN 2: REGION NAME */}
           <div className="flex flex-col gap-1 w-full min-w-[200px]">
             <label
-              className={`text-[10px] font-bold uppercase tracking-wider pl-1 ${
-                !selectedType ? "text-gray-300" : "text-[#393D7E]/50"
-              }`}
+              className={`text-[10px] font-bold uppercase tracking-wider pl-1 ${!selectedType ? "text-gray-300" : "text-[#4D2B8C]/50"
+                }`}
             >
               Location
             </label>
             <div className="relative group">
               <MapPin
                 size={14}
-                className={`absolute left-3 top-1/2 -translate-y-1/2 ${
-                  !selectedType ? "text-gray-300" : "text-[#393D7E]/40"
-                }`}
+                className={`absolute left-3 top-1/2 -translate-y-1/2 ${!selectedType ? "text-gray-300" : "text-[#4D2B8C]/40"
+                  }`}
               />
               <select
                 value={selectedLocationId}
                 onChange={(e) => setSelectedLocationId(e.target.value)}
                 className={`w-full pl-9 pr-8 py-2.5 bg-white border rounded-xl text-xs font-bold outline-none appearance-none transition-all
-                            ${
-                              !selectedType
-                                ? "border-gray-100 text-gray-300 cursor-not-allowed"
-                                : "border-[#393D7E]/10 text-[#393D7E] hover:bg-[#F5F7FA] focus:ring-2 focus:ring-[#5459AC] cursor-pointer"
-                            }`}
+                            ${!selectedType
+                    ? "border-gray-100 text-gray-300 cursor-not-allowed"
+                    : "border-[#4D2B8C]/10 text-[#4D2B8C] hover:bg-[#F5F7FA] focus:ring-2 focus:ring-[#F39EB6] cursor-pointer"
+                  }`}
                 disabled={!selectedType || availableLocations.length === 0}
               >
                 <option value="">
@@ -179,9 +176,8 @@ export const RegionsView = ({ user, students }: RegionsViewProps) => {
               </select>
               <ChevronDown
                 size={14}
-                className={`absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none ${
-                  !selectedType ? "text-gray-300" : "text-[#393D7E]/40"
-                }`}
+                className={`absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none ${!selectedType ? "text-gray-300" : "text-[#4D2B8C]/40"
+                  }`}
               />
             </div>
           </div>
@@ -190,21 +186,19 @@ export const RegionsView = ({ user, students }: RegionsViewProps) => {
         <div className="flex bg-[#F5F7FA] p-1 rounded-xl">
           <button
             onClick={() => setViewMode("students")}
-            className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${
-              viewMode === "students"
-                ? "bg-[#393D7E] text-white shadow-md"
-                : "text-[#5459AC] hover:text-[#393D7E]"
-            }`}
+            className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${viewMode === "students"
+              ? "bg-[#4D2B8C] text-white shadow-md"
+              : "text-[#4D2B8C] hover:text-[#4D2B8C]/80"
+              }`}
           >
             Students ({filteredStudents.length})
           </button>
           <button
             onClick={() => setViewMode("teachers")}
-            className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${
-              viewMode === "teachers"
-                ? "bg-[#393D7E] text-white shadow-md"
-                : "text-[#5459AC] hover:text-[#393D7E]"
-            }`}
+            className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${viewMode === "teachers"
+              ? "bg-[#4D2B8C] text-white shadow-md"
+              : "text-[#4D2B8C] hover:text-[#4D2B8C]/80"
+              }`}
           >
             Teachers ({filteredTeachers.length})
           </button>
@@ -214,26 +208,26 @@ export const RegionsView = ({ user, students }: RegionsViewProps) => {
       {/* EMPTY STATES & MESSAGES */}
       {isLeafNodeAdmin ? (
         <div className="py-20 text-center flex flex-col items-center justify-center bg-red-50 rounded-3xl border-2 border-red-100 border-dashed">
-          <div className="p-4 bg-white rounded-full mb-4 text-[#C04C63] shadow-sm">
+          <div className="p-4 bg-white rounded-full mb-4 text-[#4D2B8C] shadow-sm">
             <Lock size={32} />
           </div>
-          <h3 className="text-lg font-bold text-[#C04C63]">
+          <h3 className="text-lg font-bold text-[#4D2B8C]">
             Restricted Access
           </h3>
-          <p className="text-[#F2AEBB] font-medium max-w-sm mt-2">
+          <p className="text-[#F39EB6] font-medium max-w-sm mt-2">
             You are logged in as a <strong>{user.role}</strong>. There are no
             lower-level regions available for you to view or filter.
           </p>
         </div>
       ) : !selectedLocationId ? (
-        <div className="py-20 text-center flex flex-col items-center justify-center bg-white/50 rounded-3xl border-2 border-[#393D7E]/10 border-dashed">
-          <div className="p-4 bg-[#E0E7FF] rounded-full mb-4 text-[#393D7E]">
+        <div className="py-20 text-center flex flex-col items-center justify-center bg-white/50 rounded-3xl border-2 border-[#4D2B8C]/10 border-dashed">
+          <div className="p-4 bg-[#E0E7FF] rounded-full mb-4 text-[#4D2B8C]">
             <Filter size={32} />
           </div>
-          <h3 className="text-lg font-bold text-[#393D7E]">
+          <h3 className="text-lg font-bold text-[#4D2B8C]">
             Select a Location
           </h3>
-          <p className="text-[#5459AC]">
+          <p className="text-[#4D2B8C]">
             Choose a hierarchy level and location to view data.
           </p>
         </div>
@@ -242,7 +236,7 @@ export const RegionsView = ({ user, students }: RegionsViewProps) => {
           <Card className="p-0 overflow-hidden shadow-xl border-none">
             {viewMode === "students" ? (
               <table className="w-full">
-                <thead className="bg-[#393D7E] text-white">
+                <thead className="bg-[#4D2B8C] text-white">
                   <tr className="text-left text-xs font-bold uppercase">
                     <th className="p-4 pl-6">Student Name</th>
                     <th className="p-4">Course</th>
@@ -255,12 +249,12 @@ export const RegionsView = ({ user, students }: RegionsViewProps) => {
                     <tr key={s.id} className="hover:bg-[#F5F7FA]">
                       <td className="p-4 pl-6 flex items-center gap-3">
                         <img src={s.avatarUrl} className="w-8 h-8 rounded-lg" />
-                        <span className="font-bold text-[#393D7E] text-sm">
+                        <span className="font-bold text-[#4D2B8C] text-sm">
                           {s.name}
                         </span>
                       </td>
-                      <td className="p-4 text-sm text-[#5459AC]">{s.course}</td>
-                      <td className="p-4 text-sm text-[#5459AC]/70">
+                      <td className="p-4 text-sm text-[#4D2B8C]">{s.course}</td>
+                      <td className="p-4 text-sm text-[#4D2B8C]/70">
                         {s.enrollmentDate}
                       </td>
                       <td className="p-4">
@@ -285,7 +279,7 @@ export const RegionsView = ({ user, students }: RegionsViewProps) => {
               </table>
             ) : (
               <table className="w-full">
-                <thead className="bg-[#393D7E] text-white">
+                <thead className="bg-[#4D2B8C] text-white">
                   <tr className="text-left text-xs font-bold uppercase">
                     <th className="p-4 pl-6">Trainer Name</th>
                     <th className="p-4">Students</th>
@@ -299,15 +293,15 @@ export const RegionsView = ({ user, students }: RegionsViewProps) => {
                       <td className="p-4 pl-6 flex items-center gap-3">
                         <img src={t.avatarUrl} className="w-8 h-8 rounded-lg" />
                         <div>
-                          <p className="font-bold text-[#393D7E] text-sm">
+                          <p className="font-bold text-[#4D2B8C] text-sm">
                             {t.name}
                           </p>
                         </div>
                       </td>
-                      <td className="p-4 text-sm font-bold text-[#393D7E]">
+                      <td className="p-4 text-sm font-bold text-[#4D2B8C]">
                         {t.students}
                       </td>
-                      <td className="p-4 text-sm text-[#F2AEBB] font-bold">
+                      <td className="p-4 text-sm text-[#F39EB6] font-bold">
                         ★ {t.rating}
                       </td>
                       <td className="p-4">

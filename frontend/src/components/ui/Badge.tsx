@@ -7,10 +7,10 @@ interface BadgeProps {
 
 export const Badge = ({ type, text }: BadgeProps) => {
     const styles: { [key: string]: string } = {
-        success: "bg-[#6DC3BB] text-white",
-        warning: "bg-[#F2AEBB] text-[#C04C63]",
+        success: "bg-[#4D2B8C] text-white",
+        warning: "bg-[#F39EB6]/20 text-[#4D2B8C]",
         danger: "bg-red-500 text-white",
-        neutral: "bg-[#393D7E]/10 text-[#393D7E]",
+        neutral: "bg-[#4D2B8C]/10 text-[#4D2B8C]",
     };
     return (
         <span

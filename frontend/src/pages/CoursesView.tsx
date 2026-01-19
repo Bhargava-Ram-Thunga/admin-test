@@ -6,11 +6,11 @@ interface CoursesViewProps {
   user: User;
 }
 
-export const CoursesView = ({}: CoursesViewProps) => (
+export const CoursesView = ({ }: CoursesViewProps) => (
   <div className="space-y-6">
     <div className="flex justify-between items-center">
-      <h1 className="text-2xl font-bold text-[#393D7E]">Course Catalog</h1>
-      <button className="bg-[#393D7E] text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-[#5459AC] transition">
+      <h1 className="text-2xl font-bold text-[#4D2B8C]">Course Catalog</h1>
+      <button className="bg-[#4D2B8C] text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-[#F39EB6] transition">
         <Plus size={16} className="inline mr-2" />
         Create Course
       </button>
@@ -21,7 +21,7 @@ export const CoursesView = ({}: CoursesViewProps) => (
           key={i}
           className="group hover:shadow-xl transition-all p-0 overflow-hidden border-none"
         >
-          <div className="h-40 bg-[#393D7E] relative group-hover:bg-[#5459AC] transition-colors">
+          <div className="h-40 bg-[#4D2B8C] relative group-hover:bg-[#F39EB6] transition-colors">
             <BookOpen
               size={48}
               className="text-white/20 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
@@ -31,10 +31,10 @@ export const CoursesView = ({}: CoursesViewProps) => (
             </div>
           </div>
           <div className="p-6">
-            <h3 className="font-bold text-lg text-[#393D7E] mb-1">{c}</h3>
-            <p className="text-sm text-[#5459AC] mb-4">12 Modules • 45 Hours</p>
+            <h3 className="font-bold text-lg text-[#4D2B8C] mb-1">{c}</h3>
+            <p className="text-sm text-[#4D2B8C] mb-4">12 Modules • 45 Hours</p>
             <div className="flex justify-between items-center">
-              <span className="font-bold text-[#393D7E]">₹ 25,000</span>
+              <span className="font-bold text-[#4D2B8C]">₹ 25,000</span>
             </div>
           </div>
         </Card>

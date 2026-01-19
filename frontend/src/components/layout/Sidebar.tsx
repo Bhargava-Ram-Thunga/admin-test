@@ -12,9 +12,12 @@ import {
   BarChart2,
   X,
   Menu,
+  Share2,
+  Calendar,
 } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import type { User } from "../../types";
+import logo from "../../assets/logo.png";
 
 interface SidebarProps {
   user: User;
@@ -35,16 +38,18 @@ export const Sidebar = ({ user }: SidebarProps) => {
           navigate(`/${id}`);
           setMobileOpen(false);
         }}
-        className={`w-full flex items-center gap-4 py-3 mb-1 transition-all rounded-xl cursor-pointer pl-[18px] ${isActive
-            ? "bg-white text-[#3b82f6] shadow-md"
-            : "text-white/70 hover:bg-white/10 hover:text-white"
+        className={`flex items-center h-12 mb-1 transition-all duration-300 ease-in-out rounded-xl cursor-pointer 
+          ${isExpanded ? "w-full gap-3 ml-0 pl-3" : "w-12 gap-0 ml-1 pl-2"}
+          ${isActive
+            ? "bg-[#F39EB6] text-white shadow-sm font-semibold"
+            : "text-white/80 hover:bg-[#F39EB6]/20 hover:text-white"
           } `}
       >
-        <div className="transition-all min-w-[20px]">
-          <Icon size={20} className="min-w-[20px]" />
+        <div className="flex items-center justify-center w-8 h-8 transition-all duration-300 ease-in-out shrink-0">
+          <Icon size={20} />
         </div>
         <span
-          className={`text-sm font-medium whitespace-nowrap overflow-hidden transition-all duration-300 ${isExpanded ? "w-auto opacity-100 ml-0" : "w-0 opacity-0 -ml-4"
+          className={`text-sm whitespace-nowrap overflow-hidden transition-all duration-300 ease-in-out ${isExpanded ? "max-w-40 opacity-100 ml-0" : "max-w-0 opacity-0 ml-0"
             }`}
         >
           {label}
@@ -55,12 +60,14 @@ export const Sidebar = ({ user }: SidebarProps) => {
 
   const SectionLabel = ({ label }: { label: string }) => (
     <p
-      className={`text-xs font-bold text-white/40 uppercase mb-4 tracking-wider pl-[18px] whitespace-nowrap transition-all duration-300 ease-in-out ${isExpanded ? "opacity-100" : "opacity-0"
-        }`}
+      className={`text-xs font-bold text-white/50 uppercase mb-3 tracking-wider whitespace-nowrap overflow-hidden transition-all duration-300 ease-in-out 
+        ${isExpanded ? "max-w-40 opacity-100 pl-6" : "max-w-0 opacity-0 pl-0"}
+      `}
     >
       {label}
     </p>
   );
+
 
   return (
     <>
@@ -68,7 +75,7 @@ export const Sidebar = ({ user }: SidebarProps) => {
       <div className="fixed top-4 left-4 z-50 lg:hidden">
         <button
           onClick={() => setMobileOpen(!mobileOpen)}
-          className="p-2 bg-[#6366f1] text-white rounded-lg shadow-lg"
+          className="p-2 bg-[#4D2B8C] text-white rounded-lg shadow-lg"
         >
           {mobileOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
@@ -85,25 +92,28 @@ export const Sidebar = ({ user }: SidebarProps) => {
       <div
         onMouseEnter={() => setIsExpanded(true)}
         onMouseLeave={() => setIsExpanded(false)}
-        className={`fixed left-0 top-0 h-screen bg-[#6366f1] text-white z-50 flex flex-col transition-all duration-300 ease-in-out shadow-2xl 
+        className={`fixed left-0 top-0 h-screen bg-[#4D2B8C] text-white z-50 flex flex-col overflow-hidden transition-all duration-300 ease-in-out shadow-2xl 
                 ${mobileOpen
             ? "translate-x-0 w-64"
             : "-translate-x-full lg:translate-x-0"
           } 
                 ${isExpanded ? "lg:w-64" : "lg:w-20"}`}
       >
-        <div className="p-6 flex items-center gap-3 transition-all pl-6">
-          <div className="w-8 h-8 bg-gradient-to-tr from-white to-[#3b82f6] rounded-lg flex-shrink-0 flex items-center justify-center text-[#6366f1] font-bold shadow-lg shadow-black/20">
-            K
-          </div>
+
+        <div className="p-6 flex items-center gap-3 transition-all duration-300 ease-in-out pl-6 shrink-0">
+          <img
+            src={logo}
+            alt="Logo"
+            className="w-8 h-8 rounded-lg flex-shrink-0 shadow-lg shadow-black/20"
+          />
           <span
-            className={`font-bold text-xl tracking-tight text-white whitespace-nowrap overflow-hidden transition-all duration-300 ${isExpanded ? "w-auto opacity-100" : "w-0 opacity-0"
+            className={`font-bold text-xl tracking-tight text-white whitespace-nowrap overflow-hidden transition-all duration-300 ease-in-out ${isExpanded ? "max-w-40 opacity-100" : "max-w-0 opacity-0"
               }`}
           >
             KodingC.
           </span>
         </div>
-        <div className="flex-1 overflow-y-auto overflow-x-hidden px-3 space-y-8 mt-4 no-scrollbar">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden px-3 space-y-6 mt-6 sidebar-scrollbar min-h-0">
           <div>
             <SectionLabel label="Main Menu" />
             <NavItem icon={LayoutGrid} label="Dashboard" id="dashboard" />
@@ -114,15 +124,19 @@ export const Sidebar = ({ user }: SidebarProps) => {
           <div>
             <SectionLabel label="Management" />
             <NavItem icon={MapPin} label="Regions" id="regions" />
+            <NavItem icon={Share2} label="Allocations" id="allocations" />
+            <NavItem icon={Calendar} label="Sessions" id="sessions" />
             <NavItem icon={DollarSign} label="Finance" id="finance" />
             <NavItem icon={ShieldAlert} label="Safety" id="safety" />
             <NavItem icon={BookOpen} label="Content" id="courses" />
           </div>
         </div>
-        <div className="p-3 space-y-1 mb-4">
+        <div className="p-3 space-y-1 bg-black/10 shrink-0 pb-6">
           <NavItem icon={Settings} label="Settings" id="settings" />
           <button
-            className={`w-full flex items-center gap-4 py-3 text-[#3498db] hover:text-white hover:bg-white/10 rounded-xl transition-all text-sm font-medium pl-[18px]`}
+            className={`flex items-center h-12 text-white/80 hover:text-white hover:bg-white/10 rounded-xl transition-all duration-300 ease-in-out text-sm
+              ${isExpanded ? "w-full gap-3 ml-0 pl-3" : "w-12 gap-0 ml-1 pl-2"}
+            `}
             onClick={() => {
               import("../../utils/auth").then(({ clearSession }) => {
                 clearSession();
@@ -130,9 +144,11 @@ export const Sidebar = ({ user }: SidebarProps) => {
               });
             }}
           >
-            <LogOut size={20} className="min-w-[20px]" />
+            <div className="flex items-center justify-center w-8 h-8 transition-all duration-300 ease-in-out shrink-0">
+              <LogOut size={20} />
+            </div>
             <span
-              className={`whitespace-nowrap overflow-hidden transition-all duration-300 ${isExpanded ? "w-auto opacity-100" : "w-0 opacity-0"
+              className={`whitespace-nowrap overflow-hidden transition-all duration-300 ease-in-out ${isExpanded ? "max-w-40 opacity-100" : "max-w-0 opacity-0"
                 }`}
             >
               Log Out
