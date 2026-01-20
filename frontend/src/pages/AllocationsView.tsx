@@ -8,26 +8,39 @@ import {
     User,
     RefreshCw,
     Plus,
-    GraduationCap
+    GraduationCap,
+    Settings,
+    RotateCcw
 } from "lucide-react";
 import { MOCK_ALLOCATIONS } from "../data/mockData";
+import { CreateAllocationModal } from "../components/modals/CreateAllocationModal";
+import { ReallocationModal } from "../components/modals/ReallocationModal";
+import { AutoAssignmentConfigModal } from "../components/modals/AutoAssignmentConfigModal";
 import type { Allocation } from "../types";
 
 interface AllocationsViewProps {
     user: any;
 }
 
-export const AllocationsView = ({ user }: AllocationsViewProps) => {
+export const AllocationsView = ({ user: _user }: AllocationsViewProps) => {
     const [activeTab, setActiveTab] = useState<"all" | "pending" | "auto" | "history">("all");
     const [selectedAllocation, setSelectedAllocation] = useState<Allocation | null>(null);
     const [isDetailOpen, setIsDetailOpen] = useState(false);
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const [isReallocateModalOpen, setIsReallocateModalOpen] = useState(false);
+    const [isAutoConfigModalOpen, setIsAutoConfigModalOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
 
-    const allocations = MOCK_ALLOCATIONS as unknown as Allocation[];
+    // Mock local state to allow UI updates
+    const [allocations, setAllocations] = useState<Allocation[]>(MOCK_ALLOCATIONS as unknown as Allocation[]);
 
     // Simple filter logic
     const filteredAllocations = allocations.filter(item => {
         if (activeTab === "pending" && item.status !== "Pending") return false;
+        // In a real app, 'auto' and 'history' would filter by specific fields. 
+        // For now, we simulate 'Auto' showing items allocated by System.
+        if (activeTab === "auto" && item.allocatedBy !== "System") return false;
+
         const matchesSearch =
             item.studentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
             item.courseName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -47,10 +60,80 @@ export const AllocationsView = ({ user }: AllocationsViewProps) => {
         }
     };
 
+    // MOCK HANDLERS
+    const handleCreateAllocation = (data: any) => {
+        console.log("Creating allocation:", data);
+        // TODO: Enable API integration when backend is connected
+        /*
+        api.post('/allocations', data).then(res => {
+            setAllocations([res.data, ...allocations]);
+        });
+        */
+
+        // Mock UI update
+        const newAllocation: Allocation = {
+            id: `AL-${Date.now()}`,
+            studentId: data.studentId,
+            studentName: data.studentId === 'S001' ? 'Rahul Sharma' : 'New Student',
+            trainerId: data.trainerId || null,
+            trainerName: data.trainerId === 'T001' ? 'Vikram Malhotra' : null,
+            courseId: data.courseId,
+            courseName: 'Mathematics 101',
+            status: 'Pending',
+            requestedDate: new Date().toLocaleDateString(),
+            sessionCount: 20,
+            scheduleMode: data.scheduleMode,
+            timeSlot: data.timeSlot,
+            startDate: data.startDate
+        };
+        setAllocations([newAllocation, ...allocations]);
+    };
+
+    const handleReallocate = (data: any) => {
+        console.log("Reallocating:", data);
+        // TODO: Enable API integration when backend is connected
+        /*
+        api.post(`/allocations/${data.allocationId}/reallocate`, data);
+        */
+
+        // Mock UI update
+        const updated = allocations.map(a =>
+            a.id === data.allocationId
+                ? { ...a, trainerId: data.newTrainerId, trainerName: 'New Trainer (Mock)', notes: `Reallocated: ${data.reason}` }
+                : a
+        );
+        setAllocations(updated);
+
+        // Also update selected allocation if open
+        if (selectedAllocation?.id === data.allocationId) {
+            setSelectedAllocation(prev => prev ? { ...prev, trainerId: data.newTrainerId, trainerName: 'New Trainer (Mock)' } : null);
+        }
+    };
+
+    const handleStatusChange = (id: string, newStatus: any) => {
+        console.log(`Changing status of ${id} to ${newStatus}`);
+        // TODO: Enable API integration when backend is connected
+        /*
+        api.patch(`/allocations/${id}/status`, { status: newStatus });
+        */
+
+        const updated = allocations.map(a => a.id === id ? { ...a, status: newStatus } : a);
+        setAllocations(updated);
+        if (selectedAllocation?.id === id) {
+            setSelectedAllocation(prev => prev ? { ...prev, status: newStatus } : null);
+        }
+    };
+
+    const handleRetryAutoAssign = (id: string) => {
+        console.log(`Retrying auto-assign for ${id}`);
+        // TODO: Enable API integration when backend is connected
+        alert("System is retrying assignment based on proximity and subject match...");
+    };
+
     const AllocationDetail = ({ allocation, onClose }: { allocation: Allocation; onClose: () => void }) => (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-            <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-                <div className="p-6 border-b border-gray-100 flex justify-between items-center sticky top-0 bg-white">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+            <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in duration-200">
+                <div className="p-6 border-b border-gray-100 flex justify-between items-center sticky top-0 bg-white z-10">
                     <div>
                         <h2 className="text-2xl font-bold text-gray-800">Allocation Details</h2>
                         <p className="text-sm text-gray-500">ID: {allocation.id}</p>
@@ -76,7 +159,7 @@ export const AllocationsView = ({ user }: AllocationsViewProps) => {
                             <h3 className="text-lg font-semibold flex items-center gap-2">
                                 <User size={20} className="text-[#4D2B8C]" /> Student Details
                             </h3>
-                            <div className="bg-gray-50 p-4 rounded-lg space-y-2">
+                            <div className="bg-gray-50 p-4 rounded-lg space-y-2 border border-gray-100">
                                 <p><span className="text-gray-500">Name:</span> {allocation.studentName}</p>
                                 <p><span className="text-gray-500">ID:</span> {allocation.studentId}</p>
                             </div>
@@ -87,14 +170,22 @@ export const AllocationsView = ({ user }: AllocationsViewProps) => {
                             <h3 className="text-lg font-semibold flex items-center gap-2">
                                 <GraduationCap size={20} className="text-[#F39EB6]" /> Trainer Details
                             </h3>
-                            <div className="bg-gray-50 p-4 rounded-lg space-y-2">
+                            <div className="bg-gray-50 p-4 rounded-lg space-y-2 border border-gray-100">
                                 {allocation.trainerId ? (
                                     <>
                                         <p><span className="text-gray-500">Name:</span> {allocation.trainerName}</p>
                                         <p><span className="text-gray-500">ID:</span> {allocation.trainerId}</p>
                                     </>
                                 ) : (
-                                    <p className="text-yellow-600 italic">No trainer assigned yet</p>
+                                    <div className="flex flex-col gap-2">
+                                        <p className="text-yellow-600 italic">No trainer assigned yet</p>
+                                        <button
+                                            onClick={() => setIsReallocateModalOpen(true)}
+                                            className="text-sm text-[#4D2B8C] font-bold hover:underline self-start"
+                                        >
+                                            Assign Manually
+                                        </button>
+                                    </div>
                                 )}
                             </div>
                         </div>
@@ -115,26 +206,61 @@ export const AllocationsView = ({ user }: AllocationsViewProps) => {
                         </div>
                     </div>
 
+                    {/* NEW: Session Timeline */}
+                    <div className="space-y-4 pt-4 border-t border-gray-100">
+                        <h3 className="text-lg font-semibold flex items-center gap-2">
+                            Session Timeline (Mock)
+                        </h3>
+                        <div className="flex gap-2 overflow-x-auto pb-4">
+                            {Array.from({ length: 10 }).map((_, i) => {
+                                const status = i < 4 ? "Completed" : i === 4 ? "Scheduled" : "Pending";
+                                return (
+                                    <div key={i} className="min-w-[100px] bg-gray-50 p-3 rounded-lg border border-gray-100 flex flex-col items-center text-center gap-1">
+                                        <span className="text-xs font-bold text-gray-500">Session {i + 1}</span>
+                                        <div className={`w-3 h-3 rounded-full ${status === 'Completed' ? 'bg-green-500' :
+                                                status === 'Scheduled' ? 'bg-blue-500' : 'bg-gray-300'
+                                            }`} />
+                                        <span className="text-[10px] text-gray-400">{new Date(new Date().setDate(new Date().getDate() + i)).toLocaleDateString().slice(0, 5)}</span>
+                                    </div>
+                                )
+                            })}
+                        </div>
+                    </div>
+
                     {/* Action Buttons */}
                     <div className="flex flex-wrap gap-4 pt-4 border-t border-gray-100">
                         {allocation.status === 'Pending' && (
                             <>
-                                <button className="px-6 py-2 bg-[#4D2B8C] text-white rounded-lg hover:bg-[#4D2B8C]/90 font-medium">
+                                <button
+                                    onClick={() => handleStatusChange(allocation.id, 'Approved')}
+                                    className="px-6 py-2 bg-[#4D2B8C] text-white rounded-lg hover:bg-[#4D2B8C]/90 font-medium shadow-lg shadow-[#4D2B8C]/20"
+                                >
                                     Approve & Assign
                                 </button>
-                                <button className="px-6 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 font-medium">
+                                <button
+                                    onClick={() => handleStatusChange(allocation.id, 'Rejected')}
+                                    className="px-6 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 font-medium"
+                                >
                                     Reject
                                 </button>
                             </>
                         )}
                         {allocation.status === 'Active' && (
-                            <button className="px-6 py-2 bg-[#F39EB6]/10 text-[#4D2B8C] rounded-lg hover:bg-[#F39EB6]/20 font-medium flex items-center gap-2">
+                            <button
+                                onClick={() => setIsReallocateModalOpen(true)}
+                                className="px-6 py-2 bg-[#F39EB6]/10 text-[#4D2B8C] rounded-lg hover:bg-[#F39EB6]/20 font-medium flex items-center gap-2"
+                            >
                                 <RefreshCw size={18} /> Reallocate Trainer
                             </button>
                         )}
-                        <button onClick={() => { }} className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 font-medium">
-                            Cancel Allocation
-                        </button>
+                        {allocation.status !== 'Cancelled' && allocation.status !== 'Rejected' && (
+                            <button
+                                onClick={() => handleStatusChange(allocation.id, 'Cancelled')}
+                                className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 font-medium"
+                            >
+                                Cancel Allocation
+                            </button>
+                        )}
                     </div>
 
                 </div>
@@ -149,10 +275,24 @@ export const AllocationsView = ({ user }: AllocationsViewProps) => {
                     <h1 className="text-2xl font-bold text-gray-800">Allocation Management</h1>
                     <p className="text-gray-500">Manage trainer-student allocations</p>
                 </div>
-                <button className="flex items-center gap-2 px-4 py-2 bg-[#4D2B8C] text-white rounded-lg hover:bg-[#4D2B8C]/90 transition-colors">
-                    <Plus size={20} />
-                    Create Allocation
-                </button>
+                <div className="flex gap-2">
+                    {activeTab === 'auto' && (
+                        <button
+                            onClick={() => setIsAutoConfigModalOpen(true)}
+                            className="flex items-center gap-2 px-4 py-2 border border-gray-200 text-gray-600 rounded-lg hover:bg-gray-50 transition-colors"
+                        >
+                            <Settings size={20} />
+                            Config
+                        </button>
+                    )}
+                    <button
+                        onClick={() => setIsCreateModalOpen(true)}
+                        className="flex items-center gap-2 px-4 py-2 bg-[#4D2B8C] text-white rounded-lg hover:bg-[#4D2B8C]/90 transition-colors shadow-lg shadow-[#4D2B8C]/20"
+                    >
+                        <Plus size={20} />
+                        Create Allocation
+                    </button>
+                </div>
             </div>
 
             {/* Tabs */}
@@ -240,9 +380,19 @@ export const AllocationsView = ({ user }: AllocationsViewProps) => {
                                         {allocation.allocatedDate || allocation.requestedDate}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                        <button className="p-2 text-gray-400 hover:text-gray-600">
-                                            <MoreVertical size={18} />
-                                        </button>
+                                        {activeTab === 'auto' && allocation.status === 'Pending' ? (
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); handleRetryAutoAssign(allocation.id); }}
+                                                className="p-2 text-[#4D2B8C] hover:bg-[#4D2B8C]/10 rounded-full"
+                                                title="Retry Auto-Assign"
+                                            >
+                                                <RotateCcw size={18} />
+                                            </button>
+                                        ) : (
+                                            <button className="p-2 text-gray-400 hover:text-gray-600">
+                                                <MoreVertical size={18} />
+                                            </button>
+                                        )}
                                     </td>
                                 </tr>
                             ))}
@@ -261,6 +411,28 @@ export const AllocationsView = ({ user }: AllocationsViewProps) => {
 
             {isDetailOpen && selectedAllocation && (
                 <AllocationDetail allocation={selectedAllocation} onClose={() => setIsDetailOpen(false)} />
+            )}
+
+            {isCreateModalOpen && (
+                <CreateAllocationModal
+                    onClose={() => setIsCreateModalOpen(false)}
+                    onSave={handleCreateAllocation}
+                />
+            )}
+
+            {isReallocateModalOpen && selectedAllocation && (
+                <ReallocationModal
+                    allocation={selectedAllocation}
+                    onClose={() => setIsReallocateModalOpen(false)}
+                    onConfirm={handleReallocate}
+                />
+            )}
+
+            {isAutoConfigModalOpen && (
+                <AutoAssignmentConfigModal
+                    onClose={() => setIsAutoConfigModalOpen(false)}
+                    onSave={(config) => console.log("Config saved", config)}
+                />
             )}
         </div>
     );

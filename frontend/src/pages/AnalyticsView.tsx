@@ -80,6 +80,16 @@ export const AnalyticsView = ({ }: AnalyticsViewProps) => {
         >
           <Plus size={20} /> Add Comparison Graph
         </button>
+        <button
+          onClick={() => {
+            console.log("Exporting report...");
+            // TODO: Enable API export
+            alert("Exporting report to CSV... (Mock)");
+          }}
+          className="bg-white text-[#4D2B8C] border border-[#4D2B8C]/20 px-6 py-4 rounded-2xl text-sm font-bold flex items-center gap-3 hover:bg-gray-50 transition"
+        >
+          Export Report
+        </button>
       </div>
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
         {charts.map((chart) => (
