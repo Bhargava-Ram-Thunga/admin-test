@@ -31,7 +31,7 @@ export const RegionsView = ({ user, students }: RegionsViewProps) => {
   // Must be strictly greater than adminLevelIndex (Children Only)
   const availableLevels = useMemo(() => {
     return HIERARCHY_LEVELS.filter(
-      (_, index) => index > (adminLevelIndex ?? -1)
+      (_, index) => index >= (adminLevelIndex ?? -1)
     );
   }, [adminLevelIndex]);
 
@@ -72,8 +72,8 @@ export const RegionsView = ({ user, students }: RegionsViewProps) => {
       locations = [...locations, ...getDescendantsByType(root, selectedType)];
     });
 
-    // Remove the admin's own node if it accidentally got included
-    return locations.filter((loc) => loc.id !== user.regionId);
+    // Return all found locations, including the user's own region if it matches the selected type
+    return locations;
   }, [selectedType, user]);
 
   const locationDataIds = useMemo(() => {

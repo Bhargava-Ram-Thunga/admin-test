@@ -5,12 +5,20 @@ import { INITIAL_USERS } from "../data/mockData";
 import { setSession } from "../utils/auth";
 import { useNavigate } from "react-router-dom";
 import type { User } from "../types";
+import { Carousel } from "../components/ui/Carousel";
+
+const CAROUSEL_IMAGES = [
+  "https://www.kodingcaravan.com/flyers/img01.webp",
+  "https://www.kodingcaravan.com/flyers/img2.webp",
+  "https://www.kodingcaravan.com/flyers/img3.webp",
+];
 
 export const Login = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState("state.admin@kodingc.com");
   const [password, setPassword] = useState("123");
   const [error, setError] = useState("");
+  const [currentSlide, setCurrentSlide] = useState(0);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,8 +41,19 @@ export const Login = () => {
     <div className="min-h-screen w-full flex flex-col md:flex-row bg-[#4D2B8C] relative">
       {/* LEFT SIDE - IMAGE/GRADIENT */}
       <div className="md:w-1/2 relative hidden md:flex flex-col justify-between p-12 lg:p-16 text-white overflow-hidden">
+        {/* CAROUSEL BACKGROUND */}
+        <div className="absolute inset-0 z-0">
+          <Carousel
+            images={CAROUSEL_IMAGES}
+            interval={5000}
+            currentIndex={currentSlide}
+            onIndexChange={setCurrentSlide}
+          />
+        </div>
+
+        {/* GRADIENT OVERLAYS - Adjusted to be on top of carousel but behind text */}
         <div
-          className={`absolute inset-0 bg-gradient-to-br ${THEME.bgGradient} z-0`}
+          className={`absolute inset-0 bg-gradient-to-br ${THEME.colors.primary.bgGradient} z-10 opacity-80 mix-blend-multiply`}
         ></div>
         <div
           className="absolute inset-0 opacity-30 z-10"
@@ -45,9 +64,11 @@ export const Login = () => {
         ></div>
         <div className="relative z-20">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-[#4D2B8C] font-bold text-xl">
-              K
-            </div>
+            <img
+              src="/logo.png"
+              alt="KodingC Logo"
+              className="w-12 h-12 object-contain"
+            />
             <span className="font-bold text-2xl tracking-wide">KodingC.</span>
           </div>
         </div>
@@ -62,9 +83,15 @@ export const Login = () => {
           </p>
         </div>
         <div className="relative z-20 flex gap-3">
-          <div className="w-12 h-1.5 bg-white rounded-full"></div>
-          <div className="w-3 h-1.5 bg-white/30 rounded-full"></div>
-          <div className="w-3 h-1.5 bg-white/30 rounded-full"></div>
+          {CAROUSEL_IMAGES.map((_, index) => (
+            <button
+              key={index}
+              onClick={() => setCurrentSlide(index)}
+              className={`h-1.5 rounded-full transition-all duration-300 ease-in-out ${index === currentSlide ? "w-12 bg-white" : "w-3 bg-white/30 hover:bg-white/50"
+                }`}
+              aria-label={`Go to slide ${index + 1}`}
+            />
+          ))}
         </div>
       </div>
 

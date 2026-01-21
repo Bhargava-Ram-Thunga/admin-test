@@ -11,8 +11,7 @@ import {
     XCircle,
     ChevronLeft,
     ChevronRight,
-    AlertTriangle,
-    ArrowLeftRight
+    AlertTriangle
 } from "lucide-react";
 import { MOCK_SESSIONS, MOCK_RESCHEDULES, MOCK_CALENDAR_SESSIONS } from "../data/mockData";
 import { SessionDetailModal } from "../components/modals/SessionDetailModal";
@@ -35,6 +34,8 @@ export const SessionsView = ({ user: _user }: SessionsViewProps) => {
     // Calendar State
     const [currentDate, setCurrentDate] = useState(new Date());
     const [calendarFilter, setCalendarFilter] = useState({ trainer: "", status: "" });
+    // Local state for calendar sessions to support drag-and-drop updates
+    const [calendarSessions, setCalendarSessions] = useState(MOCK_CALENDAR_SESSIONS);
 
     // Helper to get days in month
     const getDaysInMonth = (date: Date) => {
@@ -108,7 +109,7 @@ export const SessionsView = ({ user: _user }: SessionsViewProps) => {
 
         // Filter Calendar Sessions
         const currentMonthSessions = useMemo(() => {
-            return MOCK_CALENDAR_SESSIONS.filter(s => {
+            return calendarSessions.filter(s => {
                 const sDate = new Date(s.date);
                 return sDate.getMonth() === currentDate.getMonth() &&
                     sDate.getFullYear() === currentDate.getFullYear() &&
@@ -129,12 +130,23 @@ export const SessionsView = ({ user: _user }: SessionsViewProps) => {
         const handleDrop = (e: React.DragEvent, day: number) => {
             e.preventDefault();
             const sessionId = e.dataTransfer.getData("sessionId");
-            const newDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), day).toDateString();
+            // Create a ISO-like or parseable date string for consistency, though toDateString works.
+            // Using a standard format helps if we were sending to API, but here local string is fine.
+            // Using a standard format helps if we were sending to API, but here local string is fine.
+            const targetDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
 
-            if (confirm(`Move session ${sessionId} to ${newDate}? (Visual Only)`)) {
-                // In a real app, update state here.
-                // For now, we just alert as requested by "Visual Only" and "No persistence"
-                console.log(`Dropped ${sessionId} on day ${day}`);
+            // Find the session to get more details for the confirm message or just use ID
+            const sessionToMove = calendarSessions.find(s => s.id === sessionId);
+
+            if (confirm(`Move session for ${sessionToMove?.studentName || sessionId} to ${targetDate.toLocaleDateString()}?`)) {
+                const updatedSessions = calendarSessions.map(session => {
+                    if (session.id === sessionId) {
+                        // Update the date - Must be Date object per Mock Data type
+                        return { ...session, date: targetDate };
+                    }
+                    return session;
+                });
+                setCalendarSessions(updatedSessions);
             }
         };
 
