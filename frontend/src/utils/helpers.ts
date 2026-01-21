@@ -34,6 +34,7 @@ export const getDescendantsByType = (
   return results;
 };
 
+
 export const getScopeIds = (user: User): string[] => {
   if (user.regionId === "ALL") return ["ALL"];
   const findNode = (
@@ -125,3 +126,4 @@ export const generateAnalyticsData = (
     return { name: label, value };
   });
 };
+

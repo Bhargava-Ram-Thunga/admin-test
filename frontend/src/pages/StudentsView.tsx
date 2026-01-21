@@ -207,21 +207,21 @@ export const StudentsView = ({
       {/* Header Controls */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-[#393D7E]">
+          <h1 className="text-2xl font-bold text-[#4D2B8C]">
             Students Directory
           </h1>
-          <p className="text-sm text-[#5459AC]">
+          <p className="text-sm text-[#4D2B8C]">
             Manage enrollments and mentor assignments
           </p>
         </div>
         <div className="flex gap-2 w-full sm:w-auto flex-wrap">
           {/* Assignment Filter */}
-          <div className="bg-white px-3 py-2 rounded-xl border border-[#393D7E]/10 flex items-center gap-2 text-[#5459AC] shadow-sm">
+          <div className="bg-white px-3 py-2 rounded-xl border border-[#4D2B8C]/10 flex items-center gap-2 text-[#4D2B8C] shadow-sm">
             <UserCheck size={16} />
             <select
               value={assignmentFilter}
               onChange={(e) => setAssignmentFilter(e.target.value)}
-              className="bg-transparent outline-none text-sm font-bold text-[#393D7E] cursor-pointer"
+              className="bg-transparent outline-none text-sm font-bold text-[#4D2B8C] cursor-pointer"
             >
               <option value="All">All Students</option>
               <option value="Assigned">Assigned</option>
@@ -230,19 +230,19 @@ export const StudentsView = ({
           </div>
 
           {/* Search */}
-          <div className="bg-white px-4 py-2 rounded-xl border border-[#393D7E]/10 flex items-center gap-2 text-[#5459AC] shadow-sm flex-1 sm:flex-none">
+          <div className="bg-white px-4 py-2 rounded-xl border border-[#4D2B8C]/10 flex items-center gap-2 text-[#4D2B8C] shadow-sm flex-1 sm:flex-none">
             <Search size={16} />
             <input
               placeholder="Search..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="bg-transparent outline-none text-sm w-full sm:w-32 text-[#393D7E] placeholder-[#5459AC]/50"
+              className="bg-transparent outline-none text-sm w-full sm:w-32 text-[#4D2B8C] placeholder-[#4D2B8C]/50"
             />
           </div>
 
           <button
             onClick={() => handleOpenModal()}
-            className="bg-[#393D7E] text-white p-2 px-4 rounded-xl hover:bg-[#5459AC] transition shadow-lg shadow-[#393D7E]/20 font-bold text-sm flex items-center gap-2 whitespace-nowrap"
+            className="bg-[#4D2B8C] text-white p-2 px-4 rounded-xl hover:bg-[#F39EB6] transition shadow-lg shadow-[#4D2B8C]/20 font-bold text-sm flex items-center gap-2 whitespace-nowrap"
           >
             <Plus size={18} />
             <span className="hidden sm:inline">Add Student</span>
@@ -257,8 +257,8 @@ export const StudentsView = ({
         title="Assign Mentor"
       >
         <div className="space-y-6">
-          <div className="bg-[#F5F7FA] p-4 rounded-xl border border-[#393D7E]/5">
-            <p className="text-xs font-bold text-[#5459AC] uppercase mb-1">
+          <div className="bg-[#F5F7FA] p-4 rounded-xl border border-[#4D2B8C]/5">
+            <p className="text-xs font-bold text-[#4D2B8C] uppercase mb-1">
               Student
             </p>
             <div className="flex items-center gap-3">
@@ -267,10 +267,10 @@ export const StudentsView = ({
                 className="w-10 h-10 rounded-full"
               />
               <div>
-                <p className="font-bold text-[#393D7E]">
+                <p className="font-bold text-[#4D2B8C]">
                   {selectedStudentForAssignment?.name}
                 </p>
-                <p className="text-xs text-[#5459AC]">
+                <p className="text-xs text-[#4D2B8C]">
                   {selectedStudentForAssignment?.course}
                 </p>
               </div>
@@ -278,18 +278,18 @@ export const StudentsView = ({
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-[#5459AC] uppercase mb-2">
+            <label className="block text-xs font-bold text-[#4D2B8C] uppercase mb-2">
               Select Mentor
             </label>
             <div className="relative">
               <UserCheck
                 size={16}
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-[#5459AC]"
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-[#4D2B8C]"
               />
               <select
                 value={selectedMentorId}
                 onChange={(e) => setSelectedMentorId(e.target.value)}
-                className="w-full pl-10 p-3 bg-white border border-[#393D7E]/10 rounded-xl outline-none font-bold text-[#393D7E] appearance-none"
+                className="w-full pl-10 p-3 bg-white border border-[#4D2B8C]/10 rounded-xl outline-none font-bold text-[#4D2B8C] appearance-none"
               >
                 <option value="" disabled>
                   Choose a mentor...
@@ -311,7 +311,7 @@ export const StudentsView = ({
           <button
             onClick={handleAssignMentor}
             disabled={!selectedMentorId}
-            className="w-full bg-[#393D7E] text-white py-3 rounded-xl font-bold hover:bg-[#5459AC] transition shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full bg-[#4D2B8C] text-white py-3 rounded-xl font-bold hover:bg-[#F39EB6] transition shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Confirm Assignment
           </button>
@@ -326,7 +326,7 @@ export const StudentsView = ({
       >
         <form onSubmit={handleSave} className="space-y-4">
           <div>
-            <label className="block text-xs font-bold text-[#5459AC] uppercase mb-1">
+            <label className="block text-xs font-bold text-[#4D2B8C] uppercase mb-1">
               Student Name
             </label>
             <input
@@ -335,13 +335,13 @@ export const StudentsView = ({
               onChange={(e) =>
                 setFormData({ ...formData, name: e.target.value })
               }
-              className="w-full p-3 bg-[#F5F7FA] rounded-xl outline-none font-bold text-[#393D7E] focus:ring-2 focus:ring-[#5459AC]/20 transition"
+              className="w-full p-3 bg-[#F5F7FA] rounded-xl outline-none font-bold text-[#4D2B8C] focus:ring-2 focus:ring-[#F39EB6]/20 transition"
               placeholder="Enter full name"
             />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-bold text-[#5459AC] uppercase mb-1">
+              <label className="block text-xs font-bold text-[#4D2B8C] uppercase mb-1">
                 Course
               </label>
               <select
@@ -349,7 +349,7 @@ export const StudentsView = ({
                 onChange={(e) =>
                   setFormData({ ...formData, course: e.target.value })
                 }
-                className="w-full p-3 bg-[#F5F7FA] rounded-xl outline-none font-bold text-[#393D7E]"
+                className="w-full p-3 bg-[#F5F7FA] rounded-xl outline-none font-bold text-[#4D2B8C]"
               >
                 {[
                   "Python Basics",
@@ -366,7 +366,7 @@ export const StudentsView = ({
               </select>
             </div>
             <div>
-              <label className="block text-xs font-bold text-[#5459AC] uppercase mb-1">
+              <label className="block text-xs font-bold text-[#4D2B8C] uppercase mb-1">
                 Region
               </label>
               <input
@@ -374,13 +374,13 @@ export const StudentsView = ({
                 onChange={(e) =>
                   setFormData({ ...formData, regionName: e.target.value })
                 }
-                className="w-full p-3 bg-[#F5F7FA] rounded-xl outline-none font-bold text-[#393D7E]"
+                className="w-full p-3 bg-[#F5F7FA] rounded-xl outline-none font-bold text-[#4D2B8C]"
               />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-bold text-[#5459AC] uppercase mb-1">
+              <label className="block text-xs font-bold text-[#4D2B8C] uppercase mb-1">
                 Status
               </label>
               <select
@@ -388,7 +388,7 @@ export const StudentsView = ({
                 onChange={(e) =>
                   setFormData({ ...formData, status: e.target.value })
                 }
-                className="w-full p-3 bg-[#F5F7FA] rounded-xl outline-none font-bold text-[#393D7E]"
+                className="w-full p-3 bg-[#F5F7FA] rounded-xl outline-none font-bold text-[#4D2B8C]"
               >
                 <option value="Active">Active</option>
                 <option value="Completed">Completed</option>
@@ -396,7 +396,7 @@ export const StudentsView = ({
               </select>
             </div>
             <div>
-              <label className="block text-xs font-bold text-[#5459AC] uppercase mb-1">
+              <label className="block text-xs font-bold text-[#4D2B8C] uppercase mb-1">
                 Payment
               </label>
               <select
@@ -404,7 +404,7 @@ export const StudentsView = ({
                 onChange={(e) =>
                   setFormData({ ...formData, paymentStatus: e.target.value })
                 }
-                className="w-full p-3 bg-[#F5F7FA] rounded-xl outline-none font-bold text-[#393D7E]"
+                className="w-full p-3 bg-[#F5F7FA] rounded-xl outline-none font-bold text-[#4D2B8C]"
               >
                 <option value="Paid">Paid</option>
                 <option value="Pending">Pending</option>
@@ -413,7 +413,7 @@ export const StudentsView = ({
             </div>
           </div>
           <div>
-            <label className="block text-xs font-bold text-[#5459AC] uppercase mb-1">
+            <label className="block text-xs font-bold text-[#4D2B8C] uppercase mb-1">
               Fee Amount (₹)
             </label>
             <input
@@ -422,13 +422,13 @@ export const StudentsView = ({
               onChange={(e) =>
                 setFormData({ ...formData, amount: e.target.value })
               }
-              className="w-full p-3 bg-[#F5F7FA] rounded-xl outline-none font-bold text-[#393D7E]"
+              className="w-full p-3 bg-[#F5F7FA] rounded-xl outline-none font-bold text-[#4D2B8C]"
             />
           </div>
 
           <button
             type="submit"
-            className="w-full bg-[#393D7E] text-white py-3 rounded-xl font-bold hover:bg-[#5459AC] transition shadow-lg mt-4 flex items-center justify-center gap-2"
+            className="w-full bg-[#4D2B8C] text-white py-3 rounded-xl font-bold hover:bg-[#F39EB6] transition shadow-lg mt-4 flex items-center justify-center gap-2"
           >
             <Save size={18} /> Save Record
           </button>
@@ -439,7 +439,7 @@ export const StudentsView = ({
       <Card className="p-0 overflow-hidden border-none shadow-xl">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[900px]">
-            <thead className="bg-[#393D7E]">
+            <thead className="bg-[#4D2B8C]">
               <tr className="text-left text-xs font-bold text-white uppercase tracking-wider">
                 <th className="p-4 pl-6">Student</th>
                 <th className="p-4">Region</th>
@@ -464,19 +464,19 @@ export const StudentsView = ({
                         alt={s.name}
                       />
                       <div>
-                        <p className="font-bold text-[#393D7E] text-sm">
+                        <p className="font-bold text-[#4D2B8C] text-sm">
                           {s.name}
                         </p>
-                        <p className="text-xs text-[#5459AC]">
+                        <p className="text-xs text-[#4D2B8C]">
                           {s.enrollmentDate}
                         </p>
                       </div>
                     </div>
                   </td>
-                  <td className="p-4 text-sm font-medium text-[#5459AC]">
+                  <td className="p-4 text-sm font-medium text-[#4D2B8C]">
                     {s.regionName}
                   </td>
-                  <td className="p-4 text-sm font-bold text-[#393D7E]">
+                  <td className="p-4 text-sm font-bold text-[#4D2B8C]">
                     {s.course}
                   </td>
 
@@ -484,13 +484,13 @@ export const StudentsView = ({
                   <td className="p-4">
                     {s.mentorId ? (
                       <div className="flex items-center gap-2 group/mentor">
-                        <span className="text-xs font-bold bg-[#6DC3BB]/10 text-[#6DC3BB] px-2 py-1 rounded-md">
+                        <span className="text-xs font-bold bg-[#4D2B8C]/10 text-[#4D2B8C] px-2 py-1 rounded-md">
                           {s.mentorName}
                         </span>
                         {/* Quick Unassign Button */}
                         <button
                           onClick={() => handleUnassignMentor(s)}
-                          className="opacity-0 group-hover/mentor:opacity-100 text-[#F2AEBB] hover:text-red-500 transition-opacity"
+                          className="opacity-0 group-hover/mentor:opacity-100 text-[#F39EB6] hover:text-red-500 transition-opacity"
                           title="Unassign Mentor"
                         >
                           <X size={14} />
@@ -499,7 +499,7 @@ export const StudentsView = ({
                     ) : (
                       <button
                         onClick={() => handleOpenAssignModal(s)}
-                        className="text-xs font-bold bg-[#393D7E]/10 text-[#393D7E] px-3 py-1 rounded-full hover:bg-[#393D7E] hover:text-white transition flex items-center gap-1"
+                        className="text-xs font-bold bg-[#4D2B8C]/10 text-[#4D2B8C] px-3 py-1 rounded-full hover:bg-[#4D2B8C] hover:text-white transition flex items-center gap-1"
                       >
                         Assign <Plus size={12} />
                       </button>
@@ -512,8 +512,8 @@ export const StudentsView = ({
                         s.status === "Active"
                           ? "success"
                           : s.status === "Dropped"
-                          ? "warning"
-                          : "neutral"
+                            ? "warning"
+                            : "neutral"
                       }
                       text={s.status}
                     />
@@ -528,7 +528,7 @@ export const StudentsView = ({
                     <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button
                         onClick={() => handleOpenModal(s)}
-                        className="p-2 hover:bg-white hover:shadow-md rounded-lg text-[#5459AC] hover:text-[#393D7E] transition"
+                        className="p-2 hover:bg-white hover:shadow-md rounded-lg text-[#4D2B8C] hover:text-[#4D2B8C]/80 transition"
                         title="Edit Student"
                       >
                         <Edit2 size={16} />
@@ -538,7 +538,7 @@ export const StudentsView = ({
                       {s.mentorId && (
                         <button
                           onClick={() => handleOpenAssignModal(s)}
-                          className="p-2 hover:bg-white hover:shadow-md rounded-lg text-[#6DC3BB] hover:text-[#5459AC] transition"
+                          className="p-2 hover:bg-white hover:shadow-md rounded-lg text-[#4D2B8C] hover:text-[#4D2B8C]/80 transition"
                           title="Reassign Mentor"
                         >
                           <UserCheck size={16} />
@@ -547,7 +547,7 @@ export const StudentsView = ({
 
                       <button
                         onClick={() => handleDelete(s.id)}
-                        className="p-2 hover:bg-red-50 hover:shadow-md rounded-lg text-[#F2AEBB] hover:text-red-500 transition"
+                        className="p-2 hover:bg-red-50 hover:shadow-md rounded-lg text-[#F39EB6] hover:text-red-500 transition"
                         title="Delete Student"
                       >
                         <Trash2 size={16} />
@@ -558,7 +558,7 @@ export const StudentsView = ({
               ))}
               {filteredStudents.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="p-8 text-center text-[#5459AC]">
+                  <td colSpan={7} className="p-8 text-center text-[#4D2B8C]">
                     No students found matching filters.
                   </td>
                 </tr>

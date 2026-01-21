@@ -1,3 +1,5 @@
+// import { emitWarning } from "process";
+
 export const INITIAL_USERS = [
     {
         email: "super@admin.com",
@@ -46,8 +48,10 @@ export const INITIAL_USERS = [
         regionId: "MAN-01",
         avatarUrl: "https://i.pravatar.cc/150?u=man",
         password: "123",
-    },
+    }
+
 ];
+
 
 export const MOCK_HIERARCHY = [
     {
@@ -383,4 +387,291 @@ export const REVENUE_DATA = [
     { name: "Fri", revenue: 18900 },
     { name: "Sat", revenue: 23900 },
     { name: "Sun", revenue: 34900 },
+];
+
+export const MOCK_ALLOCATIONS = [
+    {
+        id: "A-1001",
+        studentId: "1",
+        studentName: "Aarav Patel",
+        trainerId: "T1",
+        trainerName: "Ravi Teja",
+        courseId: "C1",
+        courseName: "Python Basics",
+        status: "Active",
+        requestedDate: "2025-02-15",
+        allocatedDate: "2025-02-16",
+        allocatedBy: "Super Admin",
+        sessionCount: 20,
+        scheduleMode: "WEEKDAY_DAILY",
+        timeSlot: "4:00 PM",
+        startDate: "2025-02-17",
+        notes: "Student prefers evening slots."
+    },
+    {
+        id: "A-1002",
+        studentId: "2",
+        studentName: "Vivaan Singh",
+        trainerId: null,
+        trainerName: null,
+        courseId: "C2",
+        courseName: "Web Dev",
+        status: "Pending",
+        requestedDate: "2025-05-01",
+        sessionCount: 10,
+        scheduleMode: "SUNDAY_ONLY",
+        timeSlot: "9:00 AM",
+        startDate: "2025-05-05",
+        notes: "Waiting for trainer availability in Somajiguda."
+    },
+    {
+        id: "A-1003",
+        studentId: "3",
+        studentName: "Diya Reddy",
+        trainerId: "T2",
+        trainerName: "Lakshmi Narayan",
+        courseId: "C3",
+        courseName: "Data Science",
+        status: "Completed",
+        requestedDate: "2025-01-10",
+        allocatedDate: "2025-01-11",
+        allocatedBy: "Suresh Rao",
+        sessionCount: 30,
+        scheduleMode: "WEEKDAY_DAILY",
+        timeSlot: "6:00 PM",
+        startDate: "2025-01-15",
+    }
+];
+
+export const MOCK_SESSIONS = [
+    {
+        id: "S-5001",
+        allocationId: "A-1001",
+        studentId: "1",
+        studentName: "Aarav Patel",
+        trainerId: "T1",
+        trainerName: "Ravi Teja",
+        courseName: "Python Basics",
+        scheduledDate: "2025-05-20",
+        scheduledTime: "16:00",
+        duration: 60,
+        status: "Scheduled",
+        gpsStatus: "Pending",
+        faceStatus: "Pending",
+    },
+    {
+        id: "S-5002",
+        allocationId: "A-1001",
+        studentId: "1",
+        studentName: "Aarav Patel",
+        trainerId: "T1",
+        trainerName: "Ravi Teja",
+        courseName: "Python Basics",
+        scheduledDate: "2025-05-19",
+        scheduledTime: "16:00",
+        duration: 60,
+        status: "Completed",
+        gpsStatus: "Passed",
+        faceStatus: "Passed",
+        actualDuration: 58,
+        actualStartTime: "16:02",
+        actualEndTime: "17:00",
+    },
+    {
+        id: "S-5003",
+        allocationId: "A-1003",
+        studentId: "3",
+        studentName: "Diya Reddy",
+        trainerId: "T2",
+        trainerName: "Lakshmi Narayan",
+        courseName: "Data Science",
+        scheduledDate: "2025-04-10",
+        scheduledTime: "18:00",
+        duration: 90,
+        status: "Disputed",
+        gpsStatus: "Failed",
+        faceStatus: "Passed",
+    }
+];
+
+export const MOCK_RESCHEDULES = [
+    {
+        id: "R-001",
+        sessionId: "S-5001",
+        studentName: "Aarav Patel",
+        trainerName: "Ravi Teja",
+        courseName: "Python Basics",
+        originalDate: "2025-05-20",
+        originalTime: "16:00",
+        newDate: "2025-05-21",
+        newTime: "10:00",
+        requestedBy: "Student",
+        reason: "Medical Emergency",
+        status: "Pending",
+        requestedAt: "2025-05-18T10:00:00Z"
+    }
+];
+
+export const MOCK_AUTO_ASSIGNMENTS = [
+    {
+        id: "AA-001",
+        studentName: "Vivaan Singh",
+        courseName: "Web Dev",
+        assignedTrainer: "Ravi Teja",
+        assignmentDate: "2025-05-01",
+        status: "Failed",
+        method: "Auto",
+        retryCount: 1,
+        criteria: {
+            proximity: 5.2,
+            specialtyMatch: true
+        }
+    }
+];
+
+export const MOCK_CALENDAR_SESSIONS = [
+    {
+        id: "S-CAL-001",
+        studentName: "Aarav Patel",
+        trainerName: "Ravi Teja",
+        courseName: "Python Basics",
+        date: new Date(new Date().getFullYear(), new Date().getMonth(), 1), // 1st of current month
+        time: "10:00",
+        duration: 60,
+        status: "Completed",
+        trainerId: "T1",
+        studentId: "1"
+    },
+    {
+        id: "S-CAL-002",
+        studentName: "Vivaan Singh",
+        trainerName: "Ravi Teja",
+        courseName: "Web Dev",
+        date: new Date(new Date().getFullYear(), new Date().getMonth(), 2), // 2nd of current month
+        time: "14:00",
+        duration: 90,
+        status: "Scheduled",
+        trainerId: "T1",
+        studentId: "2"
+    },
+    {
+        id: "S-CAL-003",
+        studentName: "Diya Reddy",
+        trainerName: "Lakshmi Narayan",
+        courseName: "Data Science",
+        date: new Date(new Date().getFullYear(), new Date().getMonth(), 5), // 5th
+        time: "11:00",
+        duration: 60,
+        status: "Scheduled",
+        trainerId: "T2",
+        studentId: "3"
+    },
+    {
+        id: "S-CAL-004",
+        studentName: "Ishaan Kumar",
+        trainerName: "Vikram Raju",
+        courseName: "Cyber Security",
+        date: new Date(new Date().getFullYear(), new Date().getMonth(), 5), // Conflict potential (same day)
+        time: "11:00",
+        duration: 60,
+        status: "Cancelled",
+        trainerId: "T3",
+        studentId: "4"
+    },
+    {
+        id: "S-CAL-005",
+        studentName: "Ananya Gupta",
+        trainerName: "Saanvi Krishna",
+        courseName: "AI Basics",
+        date: new Date(new Date().getFullYear(), new Date().getMonth(), 10),
+        time: "09:00",
+        duration: 120,
+        status: "In Progress",
+        trainerId: "T4",
+        studentId: "5"
+    },
+    {
+        id: "S-CAL-006",
+        studentName: "Karthik Raja",
+        trainerName: "Saanvi Krishna",
+        courseName: "Full Stack Dev",
+        date: new Date(new Date().getFullYear(), new Date().getMonth(), 12),
+        time: "15:00",
+        duration: 60,
+        status: "Scheduled",
+        trainerId: "T4",
+        studentId: "6"
+    },
+    {
+        id: "S-CAL-007",
+        studentName: "Meera Nair",
+        trainerName: "Ravi Teja",
+        courseName: "UI/UX Design",
+        date: new Date(new Date().getFullYear(), new Date().getMonth(), 15),
+        time: "10:00",
+        duration: 60,
+        status: "Disputed",
+        trainerId: "T1",
+        studentId: "7"
+    },
+    {
+        id: "S-CAL-008",
+        studentName: "Rahul Varma",
+        trainerName: "Vikram Raju",
+        courseName: "Cloud Computing",
+        date: new Date(new Date().getFullYear(), new Date().getMonth(), 18),
+        time: "16:00",
+        duration: 60,
+        status: "Scheduled",
+        trainerId: "T3",
+        studentId: "8"
+    },
+    {
+        id: "S-CAL-009",
+        studentName: "Saanvi Rao",
+        trainerName: "Lakshmi Narayan",
+        courseName: "Data Analytics",
+        date: new Date(new Date().getFullYear(), new Date().getMonth(), 20),
+        time: "13:00",
+        duration: 60,
+        status: "Scheduled",
+        trainerId: "T2",
+        studentId: "9"
+    },
+    {
+        id: "S-CAL-010",
+        studentName: "Vikram Singh",
+        trainerName: "Saanvi Krishna",
+        courseName: "Python Basics",
+        date: new Date(new Date().getFullYear(), new Date().getMonth(), 25),
+        time: "11:00",
+        duration: 60,
+        status: "Scheduled",
+        trainerId: "T4",
+        studentId: "10"
+    },
+    {
+        id: "S-CAL-011",
+        studentName: "Conflict Demo 1",
+        trainerName: "Ravi Teja",
+        courseName: "Python Basics",
+        date: new Date(new Date().getFullYear(), new Date().getMonth(), 28),
+        time: "10:00",
+        duration: 60,
+        status: "Scheduled",
+        trainerId: "T1",
+        studentId: "C1"
+    },
+    {
+        id: "S-CAL-012",
+        studentName: "Conflict Demo 2",
+        trainerName: "Ravi Teja",
+        courseName: "Web Dev",
+        date: new Date(new Date().getFullYear(), new Date().getMonth(), 28),
+        time: "10:30", // Overlap!
+        duration: 60,
+        status: "Scheduled",
+        trainerId: "T1",
+        studentId: "C2"
+    }
 ];

@@ -22,6 +22,7 @@ export interface Student {
   avatarUrl: string;
   mentorId: string | null;
   mentorName: string | null;
+  email?: string;
 }
 
 export interface Trainer {
@@ -76,8 +77,85 @@ export interface ChartDataPoint {
   value: number;
 }
 
+
 export interface SidebarNavItem {
   icon: LucideIcon;
   label: string;
   id: string;
+}
+
+export type AllocationStatus = "Pending" | "Approved" | "Rejected" | "Active" | "Completed" | "Cancelled";
+
+export interface Allocation {
+  id: string;
+  studentId: string;
+  studentName: string;
+  trainerId: string | null;
+  trainerName: string | null;
+  courseId: string;
+  courseName: string;
+  status: AllocationStatus;
+  requestedDate: string;
+  allocatedDate?: string;
+  allocatedBy?: string;
+  sessionCount: number;
+  scheduleMode: "WEEKDAY_DAILY" | "SUNDAY_ONLY";
+  timeSlot: string;
+  startDate: string;
+  notes?: string;
+}
+
+export type SessionStatus = "Scheduled" | "In Progress" | "Completed" | "Cancelled" | "Disputed";
+export type VerificationStatus = "Passed" | "Failed" | "Pending";
+
+export interface Session {
+  id: string;
+  allocationId: string;
+  studentId: string;
+  studentName: string;
+  trainerId: string;
+  trainerName: string;
+  courseName: string;
+  scheduledDate: string;
+  scheduledTime: string;
+  duration: number; // minutes
+  status: SessionStatus;
+  gpsStatus: VerificationStatus;
+  faceStatus: VerificationStatus;
+  actualDuration?: number;
+  actualStartTime?: string;
+  actualEndTime?: string;
+}
+
+export type RescheduleStatus = "Pending" | "Approved" | "Rejected" | "Cancelled";
+
+export interface RescheduleRequest {
+  id: string;
+  sessionId: string;
+  studentName: string;
+  trainerName: string;
+  courseName: string;
+  originalDate: string;
+  originalTime: string;
+  newDate: string;
+  newTime: string;
+  requestedBy: "Student" | "Trainer";
+  reason: string;
+  status: RescheduleStatus;
+  requestedAt: string;
+}
+
+export interface AutoAssignment {
+  id: string;
+  studentName: string;
+  courseName: string;
+  assignedTrainer: string;
+  assignmentDate: string;
+  status: "Success" | "Failed" | "Pending";
+  method: "Auto" | "Manual";
+  retryCount: number;
+  criteria?: {
+    proximity: number;
+    specialtyMatch: boolean;
+  };
 }

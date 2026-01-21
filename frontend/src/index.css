@@ -1,1 +1,47 @@
 @import "tailwindcss";
+
+:root {
+  --color-primary-purple: #4D2B8C;
+  /* Deep Purple */
+  --color-accent-blue: #3498db;
+  /* Light Blue */
+  --color-bg-light: #F0F7FF;
+  /* Soft Blue */
+  --color-secondary-purple: #F39EB6;
+  /* Pastel Pink */
+}
+
+/* Custom Scrollbar Utility */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  /* IE and Edge */
+  scrollbar-width: none;
+  /* Firefox */
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Sidebar Specific Scrollbar */
+.sidebar-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+.sidebar-scrollbar::-webkit-scrollbar {
+  width: 5px;
+}
+
+.sidebar-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
+}
+
+.sidebar-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 255, 255, 0.4);
+}

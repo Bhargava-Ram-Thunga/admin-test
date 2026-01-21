@@ -6,7 +6,7 @@ interface FinanceViewProps {
   students: Student[];
 }
 
-export const FinanceView = ({}: FinanceViewProps) => (
+export const FinanceView = ({ }: FinanceViewProps) => (
   <div className="space-y-6">
     <h1 className="text-2xl font-bold text-[#393D7E]">Finance & Billing</h1>
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -41,6 +41,13 @@ export const FinanceView = ({}: FinanceViewProps) => (
           <button className="w-full bg-[#6DC3BB] text-white hover:bg-white hover:text-[#393D7E] transition py-3 rounded-xl font-bold text-sm">
             Withdraw Funds
           </button>
+        </Card>
+      </div>
+      <div>
+        <Card>
+          <p className="font-bold mb-2">Hierarchy</p>
+          <p className="text-sm text-gray-500 mb-4">Show Hierarchy</p>
+          <button className="px-4 py-2 bg-[#4D2B8C] text-white rounded-lg text-sm">View Details</button>
         </Card>
       </div>
     </div>
