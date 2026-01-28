@@ -34,6 +34,7 @@ import {
 } from "../data/mockData";
 import { THEME } from "../constants/theme";
 import type { User, Student } from "../types";
+import { RevenueBarChart } from "../components/dashboard/RevenueBarChart";
 
 interface DashboardViewProps {
   user: User;
@@ -151,21 +152,31 @@ export const DashboardView = ({ user }: DashboardViewProps) => { // Removed unus
   return (
     <div className="space-y-8 pb-10">
 
-      {/* 1. KPI Summary Cards */}
-      <section>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {kpiData.map((kpi, idx) => (
-            <StatCard
-              key={idx}
-              icon={kpi.icon}
-              value={kpi.value}
-              label={kpi.label}
-              trend={kpi.trend}
-              colorClass={kpi.colorClass}
-              iconBgClass={kpi.iconBgClass}
-              trendClass={kpi.trendClass}
-            />
-          ))}
+      {/* 1. Top Section: Revenue Graph + KPI Cards */}
+      <section className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+
+        {/* Left: Monthly Revenue Bar Graph (Wider) */}
+        <div className="lg:col-span-2 h-full">
+          <RevenueBarChart />
+        </div>
+
+        {/* Right: KPI Summary Cards (Narrower, 2x2 Grid) */}
+        <div className="lg:col-span-1 h-full">
+          <div className="grid grid-cols-2 gap-4 h-full">
+            {kpiData.map((kpi, idx) => (
+              <StatCard
+                key={idx}
+                icon={kpi.icon}
+                value={kpi.value}
+                label={kpi.label}
+                trend={kpi.trend}
+                colorClass={kpi.colorClass}
+                iconBgClass={kpi.iconBgClass}
+                trendClass={kpi.trendClass}
+                className="h-full flex flex-col justify-between" // Ensure card stretches and content spaced
+              />
+            ))}
+          </div>
         </div>
       </section>
 

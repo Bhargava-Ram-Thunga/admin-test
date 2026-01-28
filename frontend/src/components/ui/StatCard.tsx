@@ -8,6 +8,7 @@ interface StatCardProps {
     colorClass: string;
     iconBgClass: string;
     trendClass: string;
+    className?: string;
 }
 
 export const StatCard = ({
@@ -18,9 +19,10 @@ export const StatCard = ({
     colorClass,
     iconBgClass,
     trendClass,
+    className = "",
 }: StatCardProps) => (
     <div
-        className={`p-5 rounded-3xl shadow-md border border-white/20 relative overflow-hidden ${colorClass}`}
+        className={`p-5 rounded-3xl shadow-md border border-white/20 relative overflow-hidden ${colorClass} ${className}`}
     >
         <div className="relative z-10">
             <div className="flex justify-between items-start mb-3">

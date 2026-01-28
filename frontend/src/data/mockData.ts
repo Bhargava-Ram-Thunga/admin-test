@@ -389,6 +389,21 @@ export const REVENUE_DATA = [
     { name: "Sun", revenue: 34900 },
 ];
 
+export const MOCK_REVENUE_DATA = [
+    { name: "Jan", revenue: 45000 },
+    { name: "Feb", revenue: 52000 },
+    { name: "Mar", revenue: 48000 },
+    { name: "Apr", revenue: 61000 },
+    { name: "May", revenue: 55000 },
+    { name: "Jun", revenue: 67000 },
+    { name: "Jul", revenue: 72000 },
+    { name: "Aug", revenue: 69000 },
+    { name: "Sep", revenue: 78000 },
+    { name: "Oct", revenue: 85000 },
+    { name: "Nov", revenue: 92000 },
+    { name: "Dec", revenue: 105000 },
+];
+
 export const MOCK_ALLOCATIONS = [
     {
         id: "A-1001",
