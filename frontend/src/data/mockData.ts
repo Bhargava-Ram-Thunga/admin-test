@@ -675,3 +675,79 @@ export const MOCK_CALENDAR_SESSIONS = [
         studentId: "C2"
     }
 ];
+
+export const MOCK_GROWTH_DATA = {
+    daily: [
+        { name: "Mon", students: 12, instructors: 2 },
+        { name: "Tue", students: 18, instructors: 1 },
+        { name: "Wed", students: 15, instructors: 3 },
+        { name: "Thu", students: 25, instructors: 4 },
+        { name: "Fri", students: 20, instructors: 2 },
+        { name: "Sat", students: 30, instructors: 5 },
+        { name: "Sun", students: 10, instructors: 1 },
+    ],
+    weekly: [
+        { name: "Week 1", students: 80, instructors: 12 },
+        { name: "Week 2", students: 120, instructors: 15 },
+        { name: "Week 3", students: 150, instructors: 18 },
+        { name: "Week 4", students: 200, instructors: 25 },
+    ],
+    monthly: [
+        { name: "Jan", students: 400, instructors: 50 },
+        { name: "Feb", students: 600, instructors: 65 },
+        { name: "Mar", students: 550, instructors: 60 },
+        { name: "Apr", students: 800, instructors: 85 },
+        { name: "May", students: 950, instructors: 90 },
+        { name: "Jun", students: 1100, instructors: 100 },
+    ]
+};
+
+
+export const MOCK_REGION_LEVELS_DATA: Record<string, { name: string; students: number; sessions: number }[]> = {
+    "State": [
+        { name: "Telangana", students: 12500, sessions: 3200 },
+        { name: "Andhra Pradesh", students: 9800, sessions: 2100 },
+        { name: "Karnataka", students: 8500, sessions: 1800 },
+        { name: "Maharashtra", students: 7200, sessions: 1500 },
+    ],
+    "District": [
+        { name: "Hyderabad", students: 450, sessions: 120 },
+        { name: "Warangal", students: 320, sessions: 90 },
+        { name: "Nizamabad", students: 210, sessions: 60 },
+        { name: "Karimnagar", students: 180, sessions: 45 },
+        { name: "Khammam", students: 150, sessions: 40 },
+        { name: "Rangareddy", students: 400, sessions: 110 },
+    ],
+    "Division": [
+        { name: "Central Zone", students: 150, sessions: 45 },
+        { name: "North Zone", students: 120, sessions: 35 },
+        { name: "South Zone", students: 100, sessions: 25 },
+        { name: "East Zone", students: 80, sessions: 15 },
+        { name: "West Zone", students: 180, sessions: 55 },
+    ],
+    "Constituency": [
+        { name: "Khairatabad", students: 80, sessions: 20 },
+        { name: "Jubilee Hills", students: 70, sessions: 18 },
+        { name: "Secunderabad", students: 60, sessions: 15 },
+        { name: "Nampally", students: 50, sessions: 12 },
+        { name: "Amberpet", students: 45, sessions: 10 },
+    ],
+    "Mandal": [
+        { name: "Somajiguda", students: 40, sessions: 10 },
+        { name: "Punjagutta", students: 35, sessions: 8 },
+        { name: "Shaikpet", students: 30, sessions: 7 },
+        { name: "Begumpet", students: 25, sessions: 6 },
+        { name: "Hanamkonda", students: 20, sessions: 5 },
+    ],
+    "Village": [
+        { name: "Village A", students: 15, sessions: 3 },
+        { name: "Village B", students: 12, sessions: 2 },
+        { name: "Village C", students: 10, sessions: 2 },
+        { name: "Village D", students: 8, sessions: 1 },
+        { name: "Village E", students: 5, sessions: 1 },
+    ]
+};
+
+// Keeping this for backward compatibility if needed, but pointing to District default
+export const MOCK_REGION_DISTRIBUTION = MOCK_REGION_LEVELS_DATA["District"];
+
