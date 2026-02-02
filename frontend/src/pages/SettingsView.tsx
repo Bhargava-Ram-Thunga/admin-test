@@ -134,7 +134,7 @@ export const SettingsView = ({ user }: SettingsViewProps) => {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-[#4D2B8C]">Settings</h1>
+      <h1 className="text-2xl font-bold text-[var(--text-heading)]">Settings</h1>
 
       <div className="flex flex-col xl:flex-row gap-6 items-start">
         {/* BIG LEFT COLUMN: Main Admin Controls */}
@@ -142,23 +142,23 @@ export const SettingsView = ({ user }: SettingsViewProps) => {
 
           {/* Admin Access Control (Invite) */}
           <Card>
-            <h3 className="font-bold text-lg text-[#4D2B8C] mb-6 border-b border-[#F5F7FA] pb-4">
+            <h3 className="font-bold text-lg text-[var(--text-heading)] mb-6 border-b border-gray-100 pb-4">
               Admin Access Control
             </h3>
             <div className="bg-[#F5F7FA] p-6 rounded-2xl flex flex-col items-end gap-4">
               <div className="w-full grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="flex-1">
-                  <label className="text-xs font-bold text-[#4D2B8C] uppercase ml-1">
+                  <label className="text-xs font-bold text-[var(--text-muted)] uppercase ml-1">
                     Invitee Email
                   </label>
                   <input
                     placeholder="colleague@koding.com"
-                    className="w-full mt-1 p-3 bg-white border border-[#4D2B8C]/10 rounded-xl outline-none"
+                    className="w-full mt-1 p-3 bg-white border border-gray-200 rounded-xl outline-none focus:border-[var(--color-primary)] transition"
                   />
                 </div>
 
                 <div className="flex-1">
-                  <label className="text-xs font-bold text-[#4D2B8C] uppercase ml-1">
+                  <label className="text-xs font-bold text-[var(--text-muted)] uppercase ml-1">
                     Admin Level
                   </label>
                   <select
@@ -167,7 +167,7 @@ export const SettingsView = ({ user }: SettingsViewProps) => {
                       setInviteLevel(e.target.value);
                       setInviteScope(""); // Reset scope when level changes
                     }}
-                    className="w-full mt-1 p-3 bg-white border border-[#4D2B8C]/10 rounded-xl outline-none text-[#4D2B8C]"
+                    className="w-full mt-1 p-3 bg-white border border-gray-200 rounded-xl outline-none text-[var(--text-body)] focus:border-[var(--color-primary)] transition"
                   >
                     {availableLevels.map(level => (
                       <option key={level} value={level}>{level}</option>
@@ -176,13 +176,13 @@ export const SettingsView = ({ user }: SettingsViewProps) => {
                 </div>
 
                 <div className="flex-1">
-                  <label className="text-xs font-bold text-[#4D2B8C] uppercase ml-1">
+                  <label className="text-xs font-bold text-[var(--text-muted)] uppercase ml-1">
                     Admin Scope
                   </label>
                   <select
                     value={inviteScope}
                     onChange={(e) => setInviteScope(e.target.value)}
-                    className="w-full mt-1 p-3 bg-white border border-[#4D2B8C]/10 rounded-xl outline-none text-[#4D2B8C]"
+                    className="w-full mt-1 p-3 bg-white border border-gray-200 rounded-xl outline-none text-[var(--text-body)] focus:border-[var(--color-primary)] transition"
                     disabled={availableScopes.length === 0}
                   >
                     <option value="">Select Scope...</option>
@@ -193,7 +193,7 @@ export const SettingsView = ({ user }: SettingsViewProps) => {
                 </div>
               </div>
 
-              <button className="w-full md:w-auto bg-[#4D2B8C] text-white px-6 py-3 rounded-xl font-bold hover:bg-[#F39EB6] transition shadow-lg">
+              <button className="w-full md:w-auto bg-[var(--color-primary)] text-white px-6 py-3 rounded-xl font-bold hover:bg-[var(--color-primary)]/90 transition shadow-none">
                 Send Invite
               </button>
             </div>
@@ -201,7 +201,7 @@ export const SettingsView = ({ user }: SettingsViewProps) => {
 
           {/* Managed Admins List */}
           <Card>
-            <h3 className="font-bold text-lg text-[#4D2B8C] mb-6 border-b border-[#F5F7FA] pb-4">
+            <h3 className="font-bold text-lg text-[var(--text-heading)] mb-6 border-b border-gray-100 pb-4">
               Managed Admins
             </h3>
 
@@ -212,7 +212,7 @@ export const SettingsView = ({ user }: SettingsViewProps) => {
                   placeholder="Search Name..."
                   value={adminFilters.name}
                   onChange={(e) => setAdminFilters(prev => ({ ...prev, name: e.target.value }))}
-                  className="w-full p-2.5 bg-white border border-[#4D2B8C]/10 rounded-xl text-sm outline-none focus:border-[#4D2B8C]/30 transition"
+                  className="w-full p-2.5 bg-white border border-gray-200 rounded-xl text-sm outline-none focus:border-[var(--color-primary)] transition"
                 />
               </div>
               <div>
@@ -220,14 +220,14 @@ export const SettingsView = ({ user }: SettingsViewProps) => {
                   placeholder="Search Email..."
                   value={adminFilters.email}
                   onChange={(e) => setAdminFilters(prev => ({ ...prev, email: e.target.value }))}
-                  className="w-full p-2.5 bg-white border border-[#4D2B8C]/10 rounded-xl text-sm outline-none focus:border-[#4D2B8C]/30 transition"
+                  className="w-full p-2.5 bg-white border border-gray-200 rounded-xl text-sm outline-none focus:border-[var(--color-primary)] transition"
                 />
               </div>
               <div>
                 <select
                   value={adminFilters.level}
                   onChange={(e) => setAdminFilters(prev => ({ ...prev, level: e.target.value, place: "" }))}
-                  className="w-full p-2.5 bg-white border border-[#4D2B8C]/10 rounded-xl text-sm outline-none text-[#4D2B8C]"
+                  className="w-full p-2.5 bg-white border border-gray-200 rounded-xl text-sm outline-none text-[var(--text-body)] focus:border-[var(--color-primary)]"
                 >
                   <option value="">All Levels</option>
                   {filterLevels.map(lvl => (
@@ -239,7 +239,7 @@ export const SettingsView = ({ user }: SettingsViewProps) => {
                 <select
                   value={adminFilters.place}
                   onChange={(e) => setAdminFilters(prev => ({ ...prev, place: e.target.value }))}
-                  className="w-full p-2.5 bg-white border border-[#4D2B8C]/10 rounded-xl text-sm outline-none text-[#4D2B8C]"
+                  className="w-full p-2.5 bg-white border border-gray-200 rounded-xl text-sm outline-none text-[var(--text-body)] focus:border-[var(--color-primary)]"
                   disabled={!adminFilters.level}
                 >
                   <option value="">All Places</option>
@@ -253,7 +253,7 @@ export const SettingsView = ({ user }: SettingsViewProps) => {
             {/* Admins Table */}
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-[#4D2B8C] text-white">
+                <thead className="bg-[#F9FAFB] text-[var(--text-muted)] border-b border-gray-200">
                   <tr className="text-left text-xs font-bold uppercase">
                     <th className="p-4 pl-6 rounded-tl-xl">Admin Name</th>
                     <th className="p-4">Email</th>
@@ -262,18 +262,18 @@ export const SettingsView = ({ user }: SettingsViewProps) => {
                     <th className="p-4 rounded-tr-xl">Action</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#F5F7FA]">
+                <tbody className="divide-y divide-gray-100">
                   {filteredAdmins.length > 0 ? filteredAdmins.map(admin => (
-                    <tr key={admin.email} className="hover:bg-[#F5F7FA] transition">
-                      <td className="p-4 pl-6 text-sm font-bold text-[#4D2B8C]">{admin.name}</td>
-                      <td className="p-4 text-sm text-[#4D2B8C]/80">{admin.email}</td>
+                    <tr key={admin.email} className="hover:bg-gray-50 transition">
+                      <td className="p-4 pl-6 text-sm font-bold text-[var(--text-heading)]">{admin.name}</td>
+                      <td className="p-4 text-sm text-[var(--text-muted)]">{admin.email}</td>
                       <td className="p-4">
                         <Badge
                           type={getAdminLevel(admin) === "State" ? "success" : "neutral"}
                           text={getAdminLevel(admin)}
                         />
                       </td>
-                      <td className="p-4 text-sm font-medium text-[#4D2B8C]">{getLocationName(admin.regionId)}</td>
+                      <td className="p-4 text-sm font-medium text-[var(--text-body)]">{getLocationName(admin.regionId)}</td>
                       <td className="p-4">
                         <button
                           onClick={() => handleDeleteAdmin(admin.email)}
@@ -300,7 +300,7 @@ export const SettingsView = ({ user }: SettingsViewProps) => {
         {/* RIGHT COLUMN: Profile Settings Panel */}
         <div className="w-full xl:w-96 shrink-0 order-first xl:order-last">
           <Card>
-            <h3 className="font-bold text-lg text-[#4D2B8C] mb-6 border-b border-[#F5F7FA] pb-4">
+            <h3 className="font-bold text-lg text-[var(--text-heading)] mb-6 border-b border-gray-100 pb-4">
               Profile Settings
             </h3>
             <div className="flex flex-col items-center gap-6">
@@ -311,26 +311,26 @@ export const SettingsView = ({ user }: SettingsViewProps) => {
               <div className="space-y-4 w-full">
                 <div className="flex flex-col gap-4">
                   <div>
-                    <label className="text-xs font-bold text-[#4D2B8C] uppercase ml-1">
+                    <label className="text-xs font-bold text-[var(--text-muted)] uppercase ml-1">
                       Full Name
                     </label>
                     <input
                       defaultValue={user.name}
-                      className="w-full mt-1 p-3 bg-[#F5F7FA] rounded-xl outline-none font-bold text-[#4D2B8C]"
+                      className="w-full mt-1 p-3 bg-gray-50 rounded-xl outline-none font-bold text-[var(--text-heading)] border border-gray-100 focus:border-[var(--color-primary)] transition"
                     />
                   </div>
                   <div>
-                    <label className="text-xs font-bold text-[#4D2B8C] uppercase ml-1">
+                    <label className="text-xs font-bold text-[var(--text-muted)] uppercase ml-1">
                       Email
                     </label>
                     <input
                       defaultValue={user.email}
-                      className="w-full mt-1 p-3 bg-[#F5F7FA] rounded-xl outline-none font-bold text-[#4D2B8C]"
+                      className="w-full mt-1 p-3 bg-gray-50 rounded-xl outline-none font-bold text-[var(--text-muted)] border border-gray-100 cursor-not-allowed"
                       disabled
                     />
                   </div>
                 </div>
-                <button className="w-full bg-[#4D2B8C] text-white px-6 py-3 rounded-xl text-sm font-bold hover:bg-[#F39EB6] transition">
+                <button className="w-full bg-[var(--color-primary)] text-white px-6 py-3 rounded-xl text-sm font-bold hover:bg-[var(--color-primary)]/90 transition shadow-none">
                   Save Changes
                 </button>
               </div>

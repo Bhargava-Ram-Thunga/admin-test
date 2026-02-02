@@ -1,17 +1,14 @@
-// Dashboard View Component
 
-import { useState, useMemo } from "react";
 import {
+  MoreVertical,
+  ChevronLeft,
+  ChevronRight,
+  BookOpen,
   Users,
   MonitorPlay,
-  Calendar as CalendarIcon,
-  BookOpen,
-  MapPin,
-  TrendingUp
+  Wallet,
 } from "lucide-react";
 import {
-  LineChart,
-  Line,
   BarChart,
   Bar,
   XAxis,
@@ -19,400 +16,328 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  Legend,
 } from "recharts";
-import { StatCard } from "../components/ui/StatCard";
-import { Card } from "../components/ui/Card";
-import {
-  INITIAL_STUDENTS,
-  MOCK_TRAINERS,
-  MOCK_SESSIONS,
-  MOCK_CALENDAR_SESSIONS,
-  MOCK_GROWTH_DATA,
-  MOCK_REGION_LEVELS_DATA,
-  INITIAL_USERS
-} from "../data/mockData";
-import { THEME } from "../constants/theme";
-import type { User, Student } from "../types";
-import { RevenueBarChart } from "../components/dashboard/RevenueBarChart";
+
+// --- Types ---
+interface User {
+  name: string;
+  role: string;
+  avatarUrl?: string;
+}
 
 interface DashboardViewProps {
   user: User;
-  students: Student[];
 }
 
-export const DashboardView = ({ user }: DashboardViewProps) => { // Removed unused students prop to fix lint
-  // --- 1. KPI Summary Cards Logic ---
-  const kpiData = useMemo(() => {
-    // Unique courses count
-    const courses = new Set(INITIAL_STUDENTS.map(s => s.course)).size;
-    return [
-      {
-        label: "Total Students",
-        value: INITIAL_STUDENTS.length,
-        icon: Users,
-        trend: "+12%",
-        colorClass: "bg-white border-[#F39EB6]/20 shadow-lg shadow-[#4D2B8C]/5",
-        iconBgClass: "bg-[#4D2B8C] shadow-lg shadow-[#4D2B8C]/30 text-white",
-        trendClass: "bg-[#F39EB6]/20 text-[#4D2B8C]",
-      },
-      {
-        label: "Total Instructors",
-        value: MOCK_TRAINERS.length,
-        icon: MonitorPlay, // Using MonitorPlay as proxy for Instructor/Session related
-        trend: "+5%",
-        colorClass: "bg-white border-[#F39EB6]/20 shadow-lg shadow-[#4D2B8C]/5",
-        iconBgClass: "bg-[#F39EB6] shadow-lg shadow-[#F39EB6]/30 text-white",
-        trendClass: "bg-[#F39EB6]/20 text-[#4D2B8C]",
-      },
-      {
-        label: "Total Sessions",
-        value: MOCK_SESSIONS.length,
-        icon: CalendarIcon,
-        trend: "+8%",
-        colorClass: "bg-white border-[#F39EB6]/20 shadow-lg shadow-[#4D2B8C]/5",
-        iconBgClass: "bg-[#F39EB6] shadow-lg shadow-[#F39EB6]/30 text-white",
-        trendClass: "bg-[#F39EB6]/20 text-[#4D2B8C]",
-      },
-      {
-        label: "Total Courses",
-        value: courses,
-        icon: BookOpen,
-        trend: "+2%",
-        colorClass: "bg-white border-[#F39EB6]/20 shadow-lg shadow-[#4D2B8C]/5",
-        iconBgClass: "bg-[#F39EB6] shadow-lg shadow-[#F39EB6]/30 text-white",
-        trendClass: "bg-[#F39EB6]/20 text-[#4D2B8C]",
-      },
-    ];
-  }, []);
+// --- Constants & Data ---
+const COLORS = {
+  Primary: "#6D5DFB", // Updated to match new Primary
+  LightPurpleBG: "#F3F4FF",
+  Green: "#22C55E",
+  Red: "#EF4444",
+  Orange: "#F59E0B",
+  Blue: "#06B6D4", // Using Cyan as Info
+  Teal: "#06B6D4", // Using Cyan
+  TextDark: "#111827",
+  TextMuted: "#9CA3AF",
+  CardBG: "#FFFFFF",
+  PageBG: "#F9FAFB",
+  Border: "#E5E7EB",
+};
 
-  // --- 2. Sessions Calendar Logic ---
-  const [currentDate, setCurrentDate] = useState(new Date());
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+const KPI_DATA = [
+  {
+    title: "Enrolled Courses",
+    value: "500",
+    fromLastMonth: "518%",
+    isPositive: true,
+    icon: BookOpen,
+    iconColor: COLORS.Primary, // Purple
+    bgStart: "bg-purple-100",
+  },
+  {
+    title: "Total Students",
+    value: "3,570",
+    fromLastMonth: "55.9%",
+    isPositive: true,
+    icon: Users,
+    iconColor: COLORS.Green,
+    bgStart: "bg-green-100",
+  },
+  {
+    title: "Total Courses",
+    value: "30",
+    fromLastMonth: "56.8%",
+    isPositive: true,
+    icon: MonitorPlay,
+    iconColor: COLORS.Orange,
+    bgStart: "bg-orange-100",
+  },
+  {
+    title: "Total Earnings",
+    value: "$50,000",
+    fromLastMonth: "43.9%",
+    isPositive: false,
+    icon: Wallet,
+    iconColor: COLORS.Teal,
+    bgStart: "bg-teal-100",
+  },
+];
 
-  const daysInMonth = useMemo(() => {
-    const year = currentDate.getFullYear();
-    const month = currentDate.getMonth();
-    const date = new Date(year, month, 1);
-    const days = [];
-    while (date.getMonth() === month) {
-      days.push(new Date(date));
-      date.setDate(date.getDate() + 1);
-    }
-    return days;
-  }, [currentDate]);
+const REVENUE_DATA = [
+  { name: "Jan", total: 120, collected: 80 },
+  { name: "Feb", total: 150, collected: 100 },
+  { name: "Mar", total: 180, collected: 120 },
+  { name: "Apr", total: 220, collected: 150 },
+  { name: "May", total: 250, collected: 180 },
+  { name: "Jun", total: 300, collected: 200 },
+  { name: "Jul", total: 450, collected: 250 },
+  { name: "Aug", total: 320, collected: 210 },
+  { name: "Sep", total: 280, collected: 190 },
+  { name: "Oct", total: 310, collected: 220 },
+  { name: "Nov", total: 350, collected: 240 },
+  { name: "Dec", total: 200, collected: 150 },
+];
 
-  const selectedDateSessions = useMemo(() => {
-    return MOCK_CALENDAR_SESSIONS.filter(
-      (session) =>
-        session.date.getDate() === selectedDate.getDate() &&
-        session.date.getMonth() === selectedDate.getMonth() &&
-        session.date.getFullYear() === selectedDate.getFullYear()
-    );
-  }, [selectedDate]);
+const TODAY_CLASSES = [
+  { title: "Emergency leave", date: "10/10/25", status: "Pending", statusColor: COLORS.Orange },
+  { title: "Medical Leave", date: "11/12/25", status: "Pending", statusColor: COLORS.Orange },
+  { title: "Now Well", date: "10/10/24", status: "Accepted", statusColor: COLORS.Green },
+  { title: "Medical Leave", date: "10/10/24", status: "Pending", statusColor: COLORS.Orange },
+  { title: "Now Well", date: "10/10/24", status: "Accepted", statusColor: COLORS.Green },
+];
 
-  const handleDateClick = (date: Date) => {
-    setSelectedDate(date);
-  };
+const NOTICE_BOARD = [
+  { name: "Admin", text: "Lorem Ipsum is simply dummy text...", date: "25 Jan 2026", avatar: "https://i.pravatar.cc/150?u=admin" },
+  { name: "Kathryn Murphy", text: "Lorem Ipsum is simply dummy text...", date: "25 Jan 2026", avatar: "https://i.pravatar.cc/150?u=kathryn" },
+  { name: "John Doe", text: "Lorem Ipsum is simply dummy text...", date: "25 Jan 2026", avatar: "https://i.pravatar.cc/150?u=john" },
+];
 
-  const isSameDay = (d1: Date, d2: Date) => {
-    return (
-      d1.getDate() === d2.getDate() &&
-      d1.getMonth() === d2.getMonth() &&
-      d1.getFullYear() === d2.getFullYear()
-    );
-  };
+const UPCOMING_EVENTS = [
+  { time: "09:00 - 09:45 AM", title: "Marketing Strategy Kickoff", sub: "Lead by Robert Fox" },
+  { time: "11:15 - 12:00 AM", title: "Product Design Brainstorm", sub: "Lead by Leslie Alexander" },
+  { time: "02:00 - 03:00 AM", title: "Client Feedback Review", sub: "Lead by Courtney Henry" },
+  { time: "04:15 - 05:00 PM", title: "Sprint Planning", sub: "Lead by John" },
+];
 
-  const hasSession = (date: Date) => {
-    return MOCK_CALENDAR_SESSIONS.some(s => isSameDay(s.date, date));
-  }
+const LEAVE_REQUESTS = [
+  { name: "Darlene Robertson", role: "English Teacher", days: "3 Days", date: "Apply on: 10 April", avatar: "https://i.pravatar.cc/150?u=darlene" },
+  { name: "Esther Howard", role: "Mathematics Teacher", days: "2 Days", date: "Apply on: 10 April", avatar: "https://i.pravatar.cc/150?u=esther" },
+  { name: "Kristin Watson", role: "History Teacher", days: "3 Days", date: "Apply on: 10 April", avatar: "https://i.pravatar.cc/150?u=kristin" },
+  { name: "Leslie Alexander", role: "English Teacher", days: "2 Days", date: "Apply on: 10 April", avatar: "https://i.pravatar.cc/150?u=leslie" },
+  { name: "Darlene Robertson", role: "English Teacher", days: "2 Days", date: "Apply on: 10 April", avatar: "https://i.pravatar.cc/150?u=darlene2" },
+  { name: "Jenny Watson", role: "English Teacher", days: "3 Days", date: "Apply on: 10 April", avatar: "https://i.pravatar.cc/150?u=jenny" },
+];
 
-  // --- 3. Growth Line Chart Logic ---
-  const [growthMetric, setGrowthMetric] = useState<"students" | "instructors">("students");
-  const [timeRange, setTimeRange] = useState<"daily" | "weekly" | "monthly">("daily");
-
-  const chartData = useMemo(() => {
-    return MOCK_GROWTH_DATA[timeRange];
-  }, [timeRange]);
-
-  // --- 4. Region Distribution Logic ---
-  const [hierarchyLevel, setHierarchyLevel] = useState("District");
-  const [regionMetric, setRegionMetric] = useState<"students" | "sessions">("students");
-
-  // Filter functionality to be added later or just mocked for now
-  const regionData = useMemo(() => {
-    // Return specific mock data for the selected level, default to empty array if not found
-    // Using defensive copy with slice() to avoid mutating original
-    const data = MOCK_REGION_LEVELS_DATA[hierarchyLevel] || [];
-    return [...data].sort((a, b) => b[regionMetric] - a[regionMetric]);
-  }, [hierarchyLevel, regionMetric]);
+const CALENDAR_DAYS = [
+  // Sun, Mon, Tue, Wed, Thu, Fri, Sat
+  // Assuming Jan 2026 starts on Thursday
+  { day: "", date: null }, { day: "", date: null }, { day: "", date: null }, { day: "", date: null },
+  { day: "1", date: 1 }, { day: "2", date: 2 }, { day: "3", date: 3 },
+  { day: "4", date: 4 }, { day: "5", date: 5 }, { day: "6", date: 6 }, { day: "7", date: 7 }, { day: "8", date: 8 }, { day: "9", date: 9 }, { day: "10", date: 10 },
+  { day: "11", date: 11, selected: true }, // Screenshot shows 11 selected
+  { day: "12", date: 12 }, { day: "13", date: 13 }, { day: "14", date: 14 }, { day: "15", date: 15 }, { day: "16", date: 16 }, { day: "17", date: 17 },
+  { day: "18", date: 18 }, { day: "19", date: 19 }, { day: "20", date: 20 }, { day: "21", date: 21 }, { day: "22", date: 22 }, { day: "23", date: 23 }, { day: "24", date: 24 },
+  { day: "25", date: 25 }, { day: "26", date: 26 }, { day: "27", date: 27 }, { day: "28", date: 28 }, { day: "29", date: 29 }, { day: "30", date: 30 }, { day: "31", date: 31 },
+];
 
 
-
+export const DashboardView = ({ user: _user }: DashboardViewProps) => {
   return (
-    <div className="space-y-8 pb-10">
+    <div className="p-4 md:p-6 bg-[var(--color-bg-app)] min-h-screen font-sans text-[var(--text-body)]">
+      {/* Header Section */}
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold">Dashboard</h1>
+        <p className="text-gray-500 text-sm mt-1">School -&gt; Manage your school, track attendance, expense, and net worth.</p>
+      </div>
 
-      {/* 1. Top Section: Revenue Graph + KPI Cards */}
-      <section className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+      {/* Main 12-Column Grid Container */}
+      <div className="grid grid-cols-12 gap-4 md:gap-6">
 
-        {/* Left: Monthly Revenue Bar Graph (Wider) */}
-        <div className="lg:col-span-2 h-full">
-          <RevenueBarChart />
-        </div>
-
-        {/* Right: KPI Summary Cards (Narrower, 2x2 Grid) */}
-        <div className="lg:col-span-1 h-full">
-          <div className="grid grid-cols-2 gap-4 h-full">
-            {kpiData.map((kpi, idx) => (
-              <StatCard
-                key={idx}
-                icon={kpi.icon}
-                value={kpi.value}
-                label={kpi.label}
-                trend={kpi.trend}
-                colorClass={kpi.colorClass}
-                iconBgClass={kpi.iconBgClass}
-                trendClass={kpi.trendClass}
-                className="h-full flex flex-col justify-between" // Ensure card stretches and content spaced
-              />
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* 2. Sessions Calendar + Detail Table */}
-      <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="lg:col-span-2">
-          <h3 className="font-bold text-lg text-[#4D2B8C] mb-4 flex items-center gap-2">
-            <CalendarIcon className="w-5 h-5" /> Session Calendar
-          </h3>
-          {/* Simple Custom Calendar Grid */}
-          <div className="bg-[#F0F7FF] rounded-xl p-4">
-            <div className="flex justify-between items-center mb-4">
-              <button onClick={() => setCurrentDate(new Date(currentDate.setMonth(currentDate.getMonth() - 1)))} className="p-1 hover:bg-[#4D2B8C]/10 rounded">&lt;</button>
-              <span className="font-bold text-[#4D2B8C]">{currentDate.toLocaleString('default', { month: 'long', year: 'numeric' })}</span>
-              <button onClick={() => setCurrentDate(new Date(currentDate.setMonth(currentDate.getMonth() + 1)))} className="p-1 hover:bg-[#4D2B8C]/10 rounded">&gt;</button>
-            </div>
-            <div className="grid grid-cols-7 gap-2 text-center text-sm">
-              {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => (
-                <div key={d} className="font-medium text-[#4D2B8C]/60 text-xs py-2">{d}</div>
-              ))}
-              {/* Padding for start of month - simplified for demo */}
-              {Array.from({ length: new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).getDay() }).map((_, i) => (
-                <div key={`empty-${i}`} className="h-10"></div>
-              ))}
-              {daysInMonth.map((date, i) => {
-                const isSelected = isSameDay(date, selectedDate);
-                const isToday = isSameDay(date, new Date());
-                const hasEvent = hasSession(date);
-
-                return (
-                  <button
-                    key={i}
-                    onClick={() => handleDateClick(date)}
-                    className={`
-                                    h-10 rounded-lg flex flex-col items-center justify-center transition border
-                                    ${isSelected ? 'bg-[#4D2B8C] text-white border-[#4D2B8C]' : 'bg-white hover:bg-white/80 border-transparent'}
-                                    ${isToday && !isSelected ? 'border-[#F39EB6] text-[#4D2B8C] font-bold' : ''}
-                                `}
-                  >
-                    <span>{date.getDate()}</span>
-                    {hasEvent && <div className={`w-1.5 h-1.5 rounded-full mt-1 ${isSelected ? 'bg-[#F39EB6]' : 'bg-[#4D2B8C]'}`}></div>}
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-        </Card>
-
-        {/* Detail Table Side Panel */}
-        <Card className="h-full flex flex-col">
-          <h3 className="font-bold text-lg text-[#4D2B8C] mb-4">
-            Session Details <span className="text-sm font-normal text-gray-500">({selectedDate.toLocaleDateString()})</span>
-          </h3>
-          <div className="flex-1 overflow-auto">
-            {selectedDateSessions.length === 0 ? (
-              <div className="h-full flex flex-col items-center justify-center text-gray-400">
-                <CalendarIcon className="w-12 h-12 mb-2 opacity-20" />
-                <p>No sessions on this date</p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {selectedDateSessions.map(session => (
-                  <div key={session.id} className="p-3 bg-[#F0F7FF] rounded-lg border border-[#4D2B8C]/10 hover:border-[#4D2B8C]/30 transition group">
-                    <div className="flex justify-between items-start mb-2">
-                      <h4 className="font-bold text-[#4D2B8C] text-sm">{session.courseName}</h4>
-                      <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${session.status === 'Completed' ? 'bg-green-100 text-green-700' :
-                        session.status === 'Scheduled' ? 'bg-blue-100 text-blue-700' :
-                          'bg-gray-100 text-gray-700'
-                        }`}>
-                        {session.status}
-                      </span>
-                    </div>
-                    <div className="text-xs text-gray-600 space-y-1">
-                      <div className="flex items-center gap-2">
-                        <MonitorPlay className="w-3 h-3 text-[#4D2B8C]/70" /> {session.trainerName}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Users className="w-3 h-3 text-[#4D2B8C]/70" /> {session.studentName}
-                      </div>
-                      <div className="flex items-center gap-2 text-[#4D2B8C] font-medium mt-2">
-                        <div className="w-1.5 h-1.5 rounded-full bg-[#F39EB6]"></div> {session.time} ({session.duration}m)
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </Card>
-      </section>
-
-      {/* 3. Growth Line Chart */}
-      <section>
-        <Card>
-          <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+        {/* --- ROW 1: KPI CARDS --- */}
+        {KPI_DATA.map((kpi, index) => (
+          <div key={index} className="col-span-12 md:col-span-6 lg:col-span-3 bg-white rounded-[14px] p-5 border border-gray-200 flex justify-between items-start h-full">
             <div>
-              <h3 className="font-bold text-lg text-[#4D2B8C] flex items-center gap-2">
-                <TrendingUp className="w-5 h-5" /> Growth Analytics
-              </h3>
-              <p className="text-xs text-gray-500">Track students and instructors joining over time</p>
+              <p className="text-[var(--text-muted)] text-sm font-medium mb-1">{kpi.title}</p>
+              <h3 className="text-3xl font-bold mb-2">{kpi.value}</h3>
+              <div className="flex items-center gap-2 text-xs">
+                <span className="text-gray-400">From last month:</span>
+                <span className={`px-1.5 py-0.5 rounded ${kpi.isPositive ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'} font-semibold`}>
+                  {kpi.fromLastMonth} {kpi.isPositive ? '▲' : '▼'}
+                </span>
+              </div>
             </div>
-            <div className="flex gap-4">
-              {/* Metric Toggle */}
-              <div className="bg-[#F0F7FF] p-1 rounded-lg flex gap-1">
-                <button
-                  onClick={() => setGrowthMetric("students")}
-                  className={`px-3 py-1 text-xs font-bold rounded-md transition ${growthMetric === 'students' ? 'bg-[#4D2B8C] text-white shadow-md' : 'text-[#4D2B8C]/60 hover:text-[#4D2B8C]'}`}
-                >
-                  Students
-                </button>
-                <button
-                  onClick={() => setGrowthMetric("instructors")}
-                  className={`px-3 py-1 text-xs font-bold rounded-md transition ${growthMetric === 'instructors' ? 'bg-[#4D2B8C] text-white shadow-md' : 'text-[#4D2B8C]/60 hover:text-[#4D2B8C]'}`}
-                >
-                  Instructors
-                </button>
+            <div className={`p-2 rounded-full text-white`} style={{ backgroundColor: kpi.iconColor }}>
+              <kpi.icon size={24} />
+            </div>
+          </div>
+        ))}
+
+        {/* --- ROW 2: Revenue (50%) | Today's Class (25%) | Notice Board (25%) --- */}
+
+        {/* Revenue Statistics Chart (50% width -> col-span-6) */}
+        <div className="col-span-12 lg:col-span-6 bg-white rounded-[14px] p-5 border border-gray-200 flex flex-col h-[320px]">
+          <div className="flex justify-between items-start mb-4">
+            <div>
+              <h3 className="text-lg font-semibold">Revenue Statistics</h3>
+              <h2 className="text-3xl font-bold mt-1">$27,200</h2>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2 text-xs">
+                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS.Primary }}></span>
+                <span className="text-gray-500">Total Fee: $500</span>
               </div>
-              {/* Time Range Toggle */}
-              <div className="bg-[#F0F7FF] p-1 rounded-lg flex gap-1">
-                {(['daily', 'weekly', 'monthly'] as const).map(range => (
-                  <button
-                    key={range}
-                    onClick={() => setTimeRange(range)}
-                    className={`px-3 py-1 text-xs font-bold rounded-md capitalize transition ${timeRange === range ? 'bg-[#F39EB6] text-white shadow-md' : 'text-[#4D2B8C]/60 hover:text-[#4D2B8C]'}`}
-                  >
-                    {range}
-                  </button>
-                ))}
+              <div className="flex items-center gap-2 text-xs">
+                <span className="w-2 h-2 rounded-full bg-purple-200"></span>
+                <span className="text-gray-500">Collected Fee: $300</span>
               </div>
+              <button className="bg-gray-50 border border-gray-200 text-gray-600 text-[10px] font-medium px-2 py-1 rounded-lg flex items-center gap-1">
+                This year <ChevronLeft className="w-3 h-3 rotate-[-90deg]" />
+              </button>
             </div>
           </div>
 
-          <div className="h-72 w-full">
+          <div className="flex-1 w-full min-h-0">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
+              <BarChart data={REVENUE_DATA} barGap={8}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F3F4F6" />
                 <XAxis
                   dataKey="name"
                   axisLine={false}
                   tickLine={false}
-                  tick={{ fill: '#6B7280', fontSize: 12 }}
+                  tick={{ fill: '#9CA3AF', fontSize: 11 }}
                   dy={10}
                 />
                 <YAxis
                   axisLine={false}
                   tickLine={false}
-                  tick={{ fill: '#6B7280', fontSize: 12 }}
+                  tick={{ fill: '#9CA3AF', fontSize: 11 }}
+                  tickFormatter={(val) => `${val / 1000}K`}
                 />
                 <Tooltip
-                  contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
-                  cursor={{ stroke: '#4D2B8C', strokeWidth: 1, strokeDasharray: '5 5' }}
+                  cursor={{ fill: '#F9FAFB' }}
+                  contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)' }}
                 />
-                <Legend wrapperStyle={{ paddingTop: '20px' }} />
-                <Line
-                  type="monotone"
-                  dataKey={growthMetric}
-                  stroke="#4D2B8C"
-                  strokeWidth={3}
-                  dot={{ fill: '#4D2B8C', strokeWidth: 2, r: 4, stroke: '#fff' }}
-                  activeDot={{ r: 6, fill: '#F39EB6', stroke: '#fff' }}
-                  name={growthMetric === 'students' ? "Students Joined" : "Instructors Joined"}
-                  animationDuration={1000}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </Card>
-      </section>
-
-      {/* 4. Region / Hierarchy Distribution Bar Graph */}
-      <section>
-        <Card>
-          <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
-            <div>
-              <h3 className="font-bold text-lg text-[#4D2B8C] flex items-center gap-2">
-                <MapPin className="w-5 h-5" /> Regional Distribution
-              </h3>
-              <p className="text-xs text-gray-500">Distribution by hierarchy level</p>
-            </div>
-            <div className="flex gap-4">
-              <select
-                value={hierarchyLevel}
-                onChange={(e) => setHierarchyLevel(e.target.value)}
-                className="bg-[#F0F7FF] border-none text-xs font-bold text-[#4D2B8C] rounded-lg py-2 px-3 outline-none cursor-pointer"
-              >
-                <option value="State">State Level</option>
-                <option value="District">District Level</option>
-                <option value="Division">Division Level</option>
-                <option value="Constituency">Constituency Level</option>
-                <option value="Mandal">Mandal Level</option>
-                <option value="Village">Village Level</option>
-              </select>
-
-              <select
-                value={regionMetric}
-                onChange={(e) => setRegionMetric(e.target.value as any)}
-                className="bg-[#F0F7FF] border-none text-xs font-bold text-[#4D2B8C] rounded-lg py-2 px-3 outline-none cursor-pointer"
-              >
-                <option value="students">Number of Students</option>
-                <option value="sessions">Number of Sessions</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="h-64 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={regionData} layout="vertical" margin={{ left: 40 }}>
-                <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#E5E7EB" />
-                <XAxis type="number" hide />
-                <YAxis
-                  dataKey="name"
-                  type="category"
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fill: '#4D2B8C', fontSize: 12, fontWeight: 500 }}
-                  width={100}
-                />
-                <Tooltip
-                  cursor={{ fill: '#F0F7FF' }}
-                  contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
-                />
-                <Bar
-                  dataKey={regionMetric}
-                  fill="#4D2B8C"
-                  radius={[0, 4, 4, 0]}
-                  barSize={20}
-                  name={regionMetric === 'students' ? "Student Count" : "Session Count"}
-                >
-                  {/* Gradient or pattern could be applied here */}
-                </Bar>
+                <Bar dataKey="total" fill={COLORS.Primary} radius={[4, 4, 4, 4]} barSize={12} />
+                <Bar dataKey="collected" fill="#E0E7FF" radius={[4, 4, 4, 4]} barSize={12} />
               </BarChart>
             </ResponsiveContainer>
           </div>
-        </Card>
-      </section>
+        </div>
 
+        {/* Today's Class (25% width -> col-span-3) */}
+        <div className="col-span-12 md:col-span-6 lg:col-span-3 bg-white rounded-[14px] p-5 border border-gray-200 flex flex-col h-[320px]">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-semibold">Today's Class</h3>
+            <button className="text-xs text-gray-400 flex items-center gap-1">This year <ChevronLeft className="w-3 h-3 rotate-[-90deg]" /></button>
+          </div>
+          <div className="space-y-3 overflow-y-auto custom-scrollbar flex-1">
+            {TODAY_CLASSES.map((item, idx) => (
+              <div key={idx} className="flex justify-between items-center">
+                <div>
+                  <p className="font-semibold text-sm text-gray-800">{item.title}</p>
+                  <p className="text-xs text-gray-400">Date: {item.date}</p>
+                </div>
+                <span className={`text-[10px] px-2 py-0.5 rounded font-medium border
+                   ${item.status === 'Accepted' ? 'bg-green-50 text-green-600 border-green-100' : 'bg-orange-50 text-orange-600 border-orange-100'}
+                 `}>
+                  {item.status}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Notice Board (25% width -> col-span-3) */}
+        <div className="col-span-12 md:col-span-6 lg:col-span-3 bg-white rounded-[14px] p-5 border border-gray-200 flex flex-col h-[320px]">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-semibold">Notice Board</h3>
+            <MoreVertical size={16} className="text-gray-400" />
+          </div>
+          <div className="space-y-4 overflow-y-auto custom-scrollbar flex-1">
+            {NOTICE_BOARD.map((notice, idx) => (
+              <div key={idx}>
+                <div className="flex items-center gap-2 mb-1">
+                  <img src={notice.avatar} alt={notice.name} className="w-6 h-6 rounded-full" />
+                  <span className="text-sm font-semibold text-gray-800">{notice.name}</span>
+                </div>
+                <p className="text-xs text-gray-500 leading-snug mb-1">{notice.text}</p>
+                <p className="text-[10px] text-gray-400">{notice.date}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* --- ROW 3: Calendar (50%) | Upcoming Events (25%) | Leave Requests (25%) --- */}
+
+        {/* Calendar (50% width -> col-span-6) */}
+        <div className="col-span-12 lg:col-span-6 bg-white rounded-[14px] p-5 border border-gray-200 h-[320px] flex flex-col">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-lg font-semibold">Calendar</h3>
+          </div>
+          <div className="flex items-center justify-between bg-[#F2F1FF] p-2 rounded-lg mb-2">
+            <button className="p-1 hover:bg-white rounded-md transition text-gray-500"><ChevronLeft size={16} /></button>
+            <span className="font-bold text-[#6C63FF] text-sm">January 2026</span>
+            <button className="p-1 hover:bg-white rounded-md transition text-gray-500"><ChevronRight size={16} /></button>
+          </div>
+          <div className="grid grid-cols-7 text-center gap-y-2 flex-1 items-center">
+            {['Sa', 'Su', 'Mo', 'Tue', 'Wed', 'Thu', 'Fri'].map(day => (
+              <div key={day} className="text-xs font-bold text-gray-400">{day}</div>
+            ))}
+            {CALENDAR_DAYS.map((item, idx) => (
+              <div key={idx} className="flex justify-center">
+                {item.date ? (
+                  <button className={`w-8 h-8 flex items-center justify-center rounded-full text-xs font-medium transition
+                    ${item.selected ? 'bg-[#6C63FF] text-white shadow-lg shadow-purple-200' : 'text-gray-600 hover:bg-gray-50'}
+                  `}>
+                    {item.date}
+                  </button>
+                ) : <span></span>}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Upcoming Events (25% width -> col-span-3) */}
+        <div className="col-span-12 md:col-span-6 lg:col-span-3 bg-white rounded-[14px] p-5 border border-gray-200 flex flex-col h-[320px]">
+          <h3 className="text-lg font-semibold mb-4">Upcoming Events</h3>
+          <div className="space-y-4 overflow-y-auto custom-scrollbar flex-1">
+            {UPCOMING_EVENTS.map((event, idx) => (
+              <div key={idx} className="relative pl-3 border-l-2 border-[#6C63FF]">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <p className="text-xs font-bold text-[#6C63FF] mb-0.5">{event.time}</p>
+                    <h4 className="text-sm font-semibold text-gray-800 leading-tight">{event.title}</h4>
+                    <p className="text-xs text-gray-400 mt-1">{event.sub}</p>
+                  </div>
+                  <button className="text-xs text-gray-500 bg-gray-50 border border-gray-200 px-2 py-1 rounded">View</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Leave Requests (25% width -> col-span-3) */}
+        <div className="col-span-12 md:col-span-6 lg:col-span-3 bg-white rounded-[14px] p-5 border border-gray-200 flex flex-col h-[320px]">
+          <h3 className="text-lg font-semibold mb-4">Leave Requests</h3>
+          <div className="space-y-3 overflow-y-auto custom-scrollbar flex-1">
+            {LEAVE_REQUESTS.map((req, idx) => (
+              <div key={idx} className="flex items-start gap-2">
+                <img src={req.avatar} alt={req.name} className="w-8 h-8 rounded-full" />
+                <div>
+                  <h4 className="text-sm font-semibold text-gray-800">{req.name}</h4>
+                  <p className="text-xs text-gray-400">{req.role}</p>
+                  <div className="flex justify-between items-center mt-1 w-full gap-2">
+                    <span className="text-[10px] font-semibold text-gray-600">{req.days}</span>
+                    <span className="text-[9px] text-gray-400 whitespace-nowrap">{req.date}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+      </div>
     </div>
   );
 };

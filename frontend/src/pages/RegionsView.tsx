@@ -113,17 +113,17 @@ export const RegionsView = ({ user, students }: RegionsViewProps) => {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-[#4D2B8C]">
+        <h1 className="text-2xl font-bold text-[var(--text-heading)]">
           Regional Data Explorer
         </h1>
         {user.regionId === "ALL" && (
-          <button className="bg-[#4D2B8C] text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-[#F39EB6] transition shadow-lg shadow-[#4D2B8C]/20">
+          <button className="bg-[var(--color-primary)] text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-[var(--color-primary)]/90 transition shadow-none">
             <Plus size={16} className="inline mr-1" /> Add Region
           </button>
         )}
       </div>
 
-      <div className="bg-white p-6 rounded-3xl shadow-lg border border-[#4D2B8C]/5 flex flex-col md:flex-row items-center gap-6 justify-between">
+      <div className="bg-white p-6 rounded-3xl shadow-none border border-gray-200 flex flex-col md:flex-row items-center gap-6 justify-between">
         <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
           {/* DROPDOWN 1: HIERARCHY LEVEL */}
           <CustomSelect
@@ -142,7 +142,7 @@ export const RegionsView = ({ user, students }: RegionsViewProps) => {
           {/* DROPDOWN 2: REGION NAME */}
           <div className="flex flex-col gap-1 w-full min-w-[200px]">
             <label
-              className={`text-[10px] font-bold uppercase tracking-wider pl-1 ${!selectedType ? "text-gray-300" : "text-[#4D2B8C]/50"
+              className={`text-[10px] font-bold uppercase tracking-wider pl-1 ${!selectedType ? "text-gray-300" : "text-[var(--text-muted)]"
                 }`}
             >
               Location
@@ -150,7 +150,7 @@ export const RegionsView = ({ user, students }: RegionsViewProps) => {
             <div className="relative group">
               <MapPin
                 size={14}
-                className={`absolute left-3 top-1/2 -translate-y-1/2 ${!selectedType ? "text-gray-300" : "text-[#4D2B8C]/40"
+                className={`absolute left-3 top-1/2 -translate-y-1/2 ${!selectedType ? "text-gray-300" : "text-[var(--color-primary)]/40"
                   }`}
               />
               <select
@@ -159,7 +159,7 @@ export const RegionsView = ({ user, students }: RegionsViewProps) => {
                 className={`w-full pl-9 pr-8 py-2.5 bg-white border rounded-xl text-xs font-bold outline-none appearance-none transition-all
                             ${!selectedType
                     ? "border-gray-100 text-gray-300 cursor-not-allowed"
-                    : "border-[#4D2B8C]/10 text-[#4D2B8C] hover:bg-[#F5F7FA] focus:ring-2 focus:ring-[#F39EB6] cursor-pointer"
+                    : "border-gray-200 text-[var(--text-body)] hover:bg-gray-50 focus:ring-2 focus:ring-[var(--color-primary)]/20 cursor-pointer"
                   }`}
                 disabled={!selectedType || availableLocations.length === 0}
               >
@@ -176,7 +176,7 @@ export const RegionsView = ({ user, students }: RegionsViewProps) => {
               </select>
               <ChevronDown
                 size={14}
-                className={`absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none ${!selectedType ? "text-gray-300" : "text-[#4D2B8C]/40"
+                className={`absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none ${!selectedType ? "text-gray-300" : "text-[var(--color-primary)]/40"
                   }`}
               />
             </div>
@@ -187,8 +187,8 @@ export const RegionsView = ({ user, students }: RegionsViewProps) => {
           <button
             onClick={() => setViewMode("students")}
             className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${viewMode === "students"
-              ? "bg-[#4D2B8C] text-white shadow-md"
-              : "text-[#4D2B8C] hover:text-[#4D2B8C]/80"
+              ? "bg-[var(--color-primary)] text-white shadow-none"
+              : "text-[var(--color-primary)] hover:text-[var(--color-primary)]/80"
               }`}
           >
             Students ({filteredStudents.length})
@@ -196,8 +196,8 @@ export const RegionsView = ({ user, students }: RegionsViewProps) => {
           <button
             onClick={() => setViewMode("teachers")}
             className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${viewMode === "teachers"
-              ? "bg-[#4D2B8C] text-white shadow-md"
-              : "text-[#4D2B8C] hover:text-[#4D2B8C]/80"
+              ? "bg-[var(--color-primary)] text-white shadow-none"
+              : "text-[var(--color-primary)] hover:text-[var(--color-primary)]/80"
               }`}
           >
             Teachers ({filteredTeachers.length})
@@ -208,123 +208,125 @@ export const RegionsView = ({ user, students }: RegionsViewProps) => {
       {/* EMPTY STATES & MESSAGES */}
       {isLeafNodeAdmin ? (
         <div className="py-20 text-center flex flex-col items-center justify-center bg-red-50 rounded-3xl border-2 border-red-100 border-dashed">
-          <div className="p-4 bg-white rounded-full mb-4 text-[#4D2B8C] shadow-sm">
+          <div className="p-4 bg-white rounded-full mb-4 text-[var(--color-error)] shadow-sm">
             <Lock size={32} />
           </div>
-          <h3 className="text-lg font-bold text-[#4D2B8C]">
+          <h3 className="text-lg font-bold text-[var(--color-error)]">
             Restricted Access
           </h3>
-          <p className="text-[#F39EB6] font-medium max-w-sm mt-2">
+          <p className="text-[var(--text-muted)] font-medium max-w-sm mt-2">
             You are logged in as a <strong>{user.role}</strong>. There are no
             lower-level regions available for you to view or filter.
           </p>
         </div>
       ) : !selectedLocationId ? (
-        <div className="py-20 text-center flex flex-col items-center justify-center bg-white/50 rounded-3xl border-2 border-[#4D2B8C]/10 border-dashed">
-          <div className="p-4 bg-[#E0E7FF] rounded-full mb-4 text-[#4D2B8C]">
+        <div className="py-20 text-center flex flex-col items-center justify-center bg-white/50 rounded-3xl border-2 border-dashed border-gray-200">
+          <div className="p-4 bg-gray-50 rounded-full mb-4 text-[var(--text-muted)]">
             <Filter size={32} />
           </div>
-          <h3 className="text-lg font-bold text-[#4D2B8C]">
+          <h3 className="text-lg font-bold text-[var(--text-heading)]">
             Select a Location
           </h3>
-          <p className="text-[#4D2B8C]">
+          <p className="text-[var(--text-muted)]">
             Choose a hierarchy level and location to view data.
           </p>
         </div>
       ) : (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-          <Card className="p-0 overflow-hidden shadow-xl border-none">
-            {viewMode === "students" ? (
-              <table className="w-full">
-                <thead className="bg-[#4D2B8C] text-white">
-                  <tr className="text-left text-xs font-bold uppercase">
-                    <th className="p-4 pl-6">Student Name</th>
-                    <th className="p-4">Course</th>
-                    <th className="p-4">Enrollment</th>
-                    <th className="p-4">Status</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[#F5F7FA]">
-                  {filteredStudents.map((s) => (
-                    <tr key={s.id} className="hover:bg-[#F5F7FA]">
-                      <td className="p-4 pl-6 flex items-center gap-3">
-                        <img src={s.avatarUrl} className="w-8 h-8 rounded-lg" />
-                        <span className="font-bold text-[#4D2B8C] text-sm">
-                          {s.name}
-                        </span>
-                      </td>
-                      <td className="p-4 text-sm text-[#4D2B8C]">{s.course}</td>
-                      <td className="p-4 text-sm text-[#4D2B8C]/70">
-                        {s.enrollmentDate}
-                      </td>
-                      <td className="p-4">
-                        <Badge
-                          type={s.status === "Active" ? "success" : "neutral"}
-                          text={s.status}
-                        />
-                      </td>
+          <Card className="p-0 overflow-hidden shadow-none border border-gray-200">
+            <div className="overflow-x-auto">
+              {viewMode === "students" ? (
+                <table className="w-full min-w-[800px]">
+                  <thead className="bg-[#F9FAFB] text-[var(--text-muted)] border-b border-gray-200">
+                    <tr className="text-left text-xs font-bold uppercase">
+                      <th className="p-4 pl-6">Student Name</th>
+                      <th className="p-4">Course</th>
+                      <th className="p-4">Enrollment</th>
+                      <th className="p-4">Status</th>
                     </tr>
-                  ))}
-                  {filteredStudents.length === 0 && (
-                    <tr>
-                      <td
-                        colSpan={4}
-                        className="p-4 text-center text-sm text-slate-400"
-                      >
-                        No students found in this region.
-                      </td>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {filteredStudents.map((s) => (
+                      <tr key={s.id} className="hover:bg-gray-50">
+                        <td className="p-4 pl-6 flex items-center gap-3">
+                          <img src={s.avatarUrl} className="w-8 h-8 rounded-lg" />
+                          <span className="font-bold text-[var(--text-heading)] text-sm">
+                            {s.name}
+                          </span>
+                        </td>
+                        <td className="p-4 text-sm text-[var(--text-body)]">{s.course}</td>
+                        <td className="p-4 text-sm text-[var(--text-muted)]">
+                          {s.enrollmentDate}
+                        </td>
+                        <td className="p-4">
+                          <Badge
+                            type={s.status === "Active" ? "success" : "neutral"}
+                            text={s.status}
+                          />
+                        </td>
+                      </tr>
+                    ))}
+                    {filteredStudents.length === 0 && (
+                      <tr>
+                        <td
+                          colSpan={4}
+                          className="p-4 text-center text-sm text-slate-400"
+                        >
+                          No students found in this region.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              ) : (
+                <table className="w-full min-w-[800px]">
+                  <thead className="bg-[#F9FAFB] text-[var(--text-muted)] border-b border-gray-200">
+                    <tr className="text-left text-xs font-bold uppercase">
+                      <th className="p-4 pl-6">Trainer Name</th>
+                      <th className="p-4">Students</th>
+                      <th className="p-4">Rating</th>
+                      <th className="p-4">Status</th>
                     </tr>
-                  )}
-                </tbody>
-              </table>
-            ) : (
-              <table className="w-full">
-                <thead className="bg-[#4D2B8C] text-white">
-                  <tr className="text-left text-xs font-bold uppercase">
-                    <th className="p-4 pl-6">Trainer Name</th>
-                    <th className="p-4">Students</th>
-                    <th className="p-4">Rating</th>
-                    <th className="p-4">Status</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[#F5F7FA]">
-                  {filteredTeachers.map((t) => (
-                    <tr key={t.id} className="hover:bg-[#F5F7FA]">
-                      <td className="p-4 pl-6 flex items-center gap-3">
-                        <img src={t.avatarUrl} className="w-8 h-8 rounded-lg" />
-                        <div>
-                          <p className="font-bold text-[#4D2B8C] text-sm">
-                            {t.name}
-                          </p>
-                        </div>
-                      </td>
-                      <td className="p-4 text-sm font-bold text-[#4D2B8C]">
-                        {t.students}
-                      </td>
-                      <td className="p-4 text-sm text-[#F39EB6] font-bold">
-                        ★ {t.rating}
-                      </td>
-                      <td className="p-4">
-                        <Badge
-                          type={t.status === "Active" ? "success" : "warning"}
-                          text={t.status}
-                        />
-                      </td>
-                    </tr>
-                  ))}
-                  {filteredTeachers.length === 0 && (
-                    <tr>
-                      <td
-                        colSpan={4}
-                        className="p-4 text-center text-sm text-slate-400"
-                      >
-                        No trainers found in this region.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            )}
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {filteredTeachers.map((t) => (
+                      <tr key={t.id} className="hover:bg-gray-50">
+                        <td className="p-4 pl-6 flex items-center gap-3">
+                          <img src={t.avatarUrl} className="w-8 h-8 rounded-lg" />
+                          <div>
+                            <p className="font-bold text-[var(--text-heading)] text-sm">
+                              {t.name}
+                            </p>
+                          </div>
+                        </td>
+                        <td className="p-4 text-sm font-bold text-[var(--text-body)]">
+                          {t.students}
+                        </td>
+                        <td className="p-4 text-sm text-[var(--color-warning)] font-bold">
+                          ★ {t.rating}
+                        </td>
+                        <td className="p-4">
+                          <Badge
+                            type={t.status === "Active" ? "success" : "warning"}
+                            text={t.status}
+                          />
+                        </td>
+                      </tr>
+                    ))}
+                    {filteredTeachers.length === 0 && (
+                      <tr>
+                        <td
+                          colSpan={4}
+                          className="p-4 text-center text-sm text-slate-400"
+                        >
+                          No trainers found in this region.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              )}
+            </div>
           </Card>
         </div>
       )}

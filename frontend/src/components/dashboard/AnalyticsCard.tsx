@@ -36,9 +36,10 @@ interface AnalyticsCardProps {
   config: ChartConfig;
   onUpdate: (id: number, updates: Partial<ChartConfig>) => void;
   onRemove: (id: number) => void;
+  isSidebarExpanded?: boolean;
 }
 
-const AnalyticsCard = ({ config, onUpdate, onRemove }: AnalyticsCardProps) => {
+const AnalyticsCard = ({ config, onUpdate, onRemove, isSidebarExpanded = false }: AnalyticsCardProps) => {
   const [data, setData] = useState<ChartDataPoint[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -239,6 +240,11 @@ const AnalyticsCard = ({ config, onUpdate, onRemove }: AnalyticsCardProps) => {
     }
   };
 
+  // Dynamic min-width with smooth transition to match sidebar
+  const responsiveMinW = isSidebarExpanded
+    ? "!min-w-[90px] transition-all duration-300 ease-in-out"
+    : "!min-w-[140px] transition-all duration-300 ease-in-out";
+
   return (
     <Card className="flex flex-col h-[480px] group relative overflow-visible transition-all hover:shadow-xl animate-in fade-in zoom-in duration-300">
       <div className="flex justify-between items-start mb-6">
@@ -259,7 +265,7 @@ const AnalyticsCard = ({ config, onUpdate, onRemove }: AnalyticsCardProps) => {
           <X size={18} />
         </button>
       </div>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6 p-4 bg-[#F5F7FA] rounded-2xl border border-[#393D7E]/5">
+      <div className="grid grid-cols-4 gap-3 mb-6 p-4 bg-[#F5F7FA] rounded-2xl border border-[#393D7E]/5 overflow-x-auto">
         <CustomSelect
           label="Graph Type"
           value={config.type}
@@ -268,6 +274,8 @@ const AnalyticsCard = ({ config, onUpdate, onRemove }: AnalyticsCardProps) => {
           }
           options={["bar", "line", "area", "pie", "donut"]}
           icon={BarChart2}
+          fullWidth={true}
+          className={responsiveMinW}
         />
         <CustomSelect
           label="X-Axis Mode"
@@ -277,6 +285,8 @@ const AnalyticsCard = ({ config, onUpdate, onRemove }: AnalyticsCardProps) => {
           }
           options={["time", "region"]}
           icon={config.xAxisMode === "time" ? Calendar : MapPin}
+          fullWidth={true}
+          className={responsiveMinW}
         />
         {config.xAxisMode === "time" ? (
           <CustomSelect
@@ -288,6 +298,8 @@ const AnalyticsCard = ({ config, onUpdate, onRemove }: AnalyticsCardProps) => {
               })
             }
             options={["daily", "weekly", "monthly", "yearly"]}
+            fullWidth={true}
+            className={responsiveMinW}
           />
         ) : (
           <CustomSelect
@@ -302,6 +314,8 @@ const AnalyticsCard = ({ config, onUpdate, onRemove }: AnalyticsCardProps) => {
               "Mandal",
             ]}
             icon={Layers}
+            fullWidth={true}
+            className={responsiveMinW}
           />
         )}
         <CustomSelect
@@ -312,6 +326,8 @@ const AnalyticsCard = ({ config, onUpdate, onRemove }: AnalyticsCardProps) => {
           }
           options={["students", "revenue", "teachers", "attendance", "growth"]}
           icon={TrendingUp}
+          fullWidth={true}
+          className={responsiveMinW}
         />
       </div>
       <div className="flex-1 min-h-0 relative w-full">{renderChart()}</div>

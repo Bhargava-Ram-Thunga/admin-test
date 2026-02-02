@@ -64,12 +64,12 @@ export const SessionsView = ({ user: _user }: SessionsViewProps) => {
 
     const getStatusColor = (status: string) => {
         switch (status) {
-            case "Scheduled": return "bg-[#4D2B8C]/10 text-[#4D2B8C] border-[#4D2B8C]/20";
-            case "In Progress": return "bg-yellow-100 text-yellow-800 border-yellow-200";
-            case "Completed": return "bg-green-100 text-green-800 border-green-200";
-            case "Cancelled": return "bg-red-100 text-red-800 border-red-200";
-            case "Disputed": return "bg-orange-100 text-orange-800 border-orange-200";
-            default: return "bg-gray-100 text-gray-800 border-gray-200";
+            case "Scheduled": return "bg-[var(--color-primary)]/10 text-[var(--color-primary)] border border-[var(--color-primary)]/20";
+            case "In Progress": return "bg-[var(--color-warning)]/10 text-[var(--color-warning)] border border-[var(--color-warning)]/20";
+            case "Completed": return "bg-[var(--color-success)]/10 text-[var(--color-success)] border border-[var(--color-success)]/20";
+            case "Cancelled": return "bg-[var(--color-error)]/10 text-[var(--color-error)] border border-[var(--color-error)]/20";
+            case "Disputed": return "bg-[var(--color-error)]/10 text-[var(--color-error)] border border-[var(--color-error)]/20";
+            default: return "bg-gray-100 text-[var(--text-muted)] border border-gray-200";
         }
     };
 
@@ -180,7 +180,7 @@ export const SessionsView = ({ user: _user }: SessionsViewProps) => {
 
                     <div className="flex items-center gap-2 w-full md:w-auto">
                         <select
-                            className="p-2 border border-gray-200 rounded-lg text-sm bg-gray-50 focus:outline-none focus:border-[#4D2B8C]"
+                            className="p-2 border border-gray-200 rounded-lg text-sm bg-gray-50 focus:outline-none focus:border-[var(--color-primary)] text-[var(--text-body)]"
                             value={calendarFilter.trainer}
                             onChange={(e) => setCalendarFilter({ ...calendarFilter, trainer: e.target.value })}
                         >
@@ -190,7 +190,7 @@ export const SessionsView = ({ user: _user }: SessionsViewProps) => {
                             <option value="Vikram">Vikram Raju</option>
                         </select>
                         <select
-                            className="p-2 border border-gray-200 rounded-lg text-sm bg-gray-50 focus:outline-none focus:border-[#4D2B8C]"
+                            className="p-2 border border-gray-200 rounded-lg text-sm bg-gray-50 focus:outline-none focus:border-[var(--color-primary)] text-[var(--text-body)]"
                             value={calendarFilter.status}
                             onChange={(e) => setCalendarFilter({ ...calendarFilter, status: e.target.value })}
                         >
@@ -221,11 +221,11 @@ export const SessionsView = ({ user: _user }: SessionsViewProps) => {
                             return (
                                 <div
                                     key={day}
-                                    className={`h-32 p-2 border rounded-lg transition-all relative group overflow-y-auto ${isToday ? 'border-[#4D2B8C] bg-[#4D2B8C]/5' : 'border-gray-100 hover:border-gray-200 bg-white'}`}
+                                    className={`h-32 p-2 border rounded-lg transition-all relative group overflow-y-auto ${isToday ? 'border-[var(--color-primary)] bg-[var(--color-primary)]/5' : 'border-gray-100 hover:border-gray-200 bg-white'}`}
                                     onDragOver={handleDragOver}
                                     onDrop={(e) => handleDrop(e, day)}
                                 >
-                                    <span className={`text-sm font-bold absolute top-2 right-2 ${isToday ? 'text-[#4D2B8C] bg-white w-6 h-6 flex items-center justify-center rounded-full shadow-sm' : 'text-gray-400'}`}>
+                                    <span className={`text-sm font-bold absolute top-2 right-2 ${isToday ? 'text-[var(--color-primary)] bg-white w-6 h-6 flex items-center justify-center rounded-full shadow-sm' : 'text-gray-400'}`}>
                                         {day}
                                     </span>
 
@@ -281,8 +281,8 @@ export const SessionsView = ({ user: _user }: SessionsViewProps) => {
         <div className="space-y-6">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-800">Sessions Management</h1>
-                    <p className="text-gray-500">Monitor and manage tutoring sessions</p>
+                    <h1 className="text-2xl font-bold text-[var(--text-heading)]">Sessions Management</h1>
+                    <p className="text-[var(--text-muted)]">Monitor and manage tutoring sessions</p>
                 </div>
             </div>
 
@@ -298,8 +298,8 @@ export const SessionsView = ({ user: _user }: SessionsViewProps) => {
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id as any)}
                         className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all ${activeTab === tab.id
-                            ? "bg-[#4D2B8C]/5 text-[#4D2B8C] shadow-sm"
-                            : "text-gray-500 hover:bg-gray-50 hover:text-gray-700"
+                            ? "bg-[var(--color-primary)]/10 text-[var(--color-primary)] shadow-none border border-[var(--color-primary)]/10"
+                            : "text-[var(--text-muted)] hover:bg-gray-50 hover:text-[var(--text-body)]"
                             }`}
                     >
                         {tab.label}
@@ -330,7 +330,7 @@ export const SessionsView = ({ user: _user }: SessionsViewProps) => {
                     {/* Table */}
                     <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                         <div className="overflow-x-auto">
-                            <table className="w-full">
+                            <table className="w-full min-w-[1000px]">
                                 <thead className="bg-gray-50 border-b border-gray-100">
                                     <tr>
                                         <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Session ID</th>
@@ -352,7 +352,7 @@ export const SessionsView = ({ user: _user }: SessionsViewProps) => {
                                                 setIsDetailOpen(true);
                                             }}
                                         >
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-[#4D2B8C]">
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-[var(--color-primary)]">
                                                 {session.id}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
@@ -408,58 +408,60 @@ export const SessionsView = ({ user: _user }: SessionsViewProps) => {
                     <div className="p-4 border-b border-gray-100 flex justify-between items-center">
                         <h2 className="font-semibold text-gray-700">Reschedule Requests</h2>
                     </div>
-                    <table className="w-full">
-                        <thead className="bg-gray-50 border-b border-gray-100">
-                            <tr>
-                                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Request ID</th>
-                                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Session</th>
-                                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Requester</th>
-                                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Old Date</th>
-                                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">New Date</th>
-                                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Reason</th>
-                                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Status</th>
-                                <th className="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-100">
-                            {reschedules.map(req => (
-                                <tr key={req.id}>
-                                    <td className="px-6 py-4 text-sm font-medium">{req.id}</td>
-                                    <td className="px-6 py-4 text-sm text-gray-600">{req.sessionId}</td>
-                                    <td className="px-6 py-4 text-sm text-gray-600">{req.requestedBy}</td>
-                                    <td className="px-6 py-4 text-sm text-gray-600">{req.originalDate} <br /><span className="text-xs">{req.originalTime}</span></td>
-                                    <td className="px-6 py-4 text-sm font-medium text-[#4D2B8C]">{req.newDate} <br /><span className="text-xs">{req.newTime}</span></td>
-                                    <td className="px-6 py-4 text-sm text-gray-600 truncate max-w-xs">{req.reason}</td>
-                                    <td className="px-6 py-4"><span className={`px-2 py-1 rounded-full text-xs font-bold ${req.status === 'Pending' ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-800'}`}>{req.status}</span></td>
-                                    <td className="px-6 py-4 text-right">
-                                        {req.status === 'Pending' && (
-                                            <>
-                                                <button
-                                                    onClick={() => handleRescheduleAction(req.id, 'Approved')}
-                                                    className="text-[#4D2B8C] hover:text-[#F39EB6] text-sm font-medium mr-3"
-                                                >
-                                                    Approve
-                                                </button>
-                                                <button
-                                                    onClick={() => handleRescheduleAction(req.id, 'Rejected')}
-                                                    className="text-red-500 hover:text-red-700 text-sm font-medium"
-                                                >
-                                                    Reject
-                                                </button>
-                                            </>
-                                        )}
-                                    </td>
-                                </tr>
-                            ))}
-                            {reschedules.length === 0 && (
+                    <div className="overflow-x-auto">
+                        <table className="w-full min-w-[900px]">
+                            <thead className="bg-gray-50 border-b border-gray-100">
                                 <tr>
-                                    <td colSpan={8} className="px-6 py-12 text-center text-gray-400">
-                                        No reschedule requests found.
-                                    </td>
+                                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Request ID</th>
+                                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Session</th>
+                                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Requester</th>
+                                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Old Date</th>
+                                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">New Date</th>
+                                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Reason</th>
+                                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Status</th>
+                                    <th className="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase">Actions</th>
                                 </tr>
-                            )}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100">
+                                {reschedules.map(req => (
+                                    <tr key={req.id}>
+                                        <td className="px-6 py-4 text-sm font-medium">{req.id}</td>
+                                        <td className="px-6 py-4 text-sm text-gray-600">{req.sessionId}</td>
+                                        <td className="px-6 py-4 text-sm text-gray-600">{req.requestedBy}</td>
+                                        <td className="px-6 py-4 text-sm text-[var(--text-muted)]">{req.originalDate} <br /><span className="text-xs">{req.originalTime}</span></td>
+                                        <td className="px-6 py-4 text-sm font-medium text-[var(--color-primary)]">{req.newDate} <br /><span className="text-xs">{req.newTime}</span></td>
+                                        <td className="px-6 py-4 text-sm text-[var(--text-muted)] truncate max-w-xs">{req.reason}</td>
+                                        <td className="px-6 py-4"><span className={`px-2 py-1 rounded-full text-xs font-bold ${req.status === 'Pending' ? 'bg-[var(--color-warning)]/10 text-[var(--color-warning)]' : 'bg-gray-100 text-[var(--text-muted)]'}`}>{req.status}</span></td>
+                                        <td className="px-6 py-4 text-right">
+                                            {req.status === 'Pending' && (
+                                                <>
+                                                    <button
+                                                        onClick={() => handleRescheduleAction(req.id, 'Approved')}
+                                                        className="text-[var(--color-success)] hover:text-green-700 text-sm font-medium mr-3"
+                                                    >
+                                                        Approve
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleRescheduleAction(req.id, 'Rejected')}
+                                                        className="text-red-500 hover:text-red-700 text-sm font-medium"
+                                                    >
+                                                        Reject
+                                                    </button>
+                                                </>
+                                            )}
+                                        </td>
+                                    </tr>
+                                ))}
+                                {reschedules.length === 0 && (
+                                    <tr>
+                                        <td colSpan={8} className="px-6 py-12 text-center text-gray-400">
+                                            No reschedule requests found.
+                                        </td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             )}
 

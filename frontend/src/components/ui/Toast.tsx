@@ -15,11 +15,13 @@ export const Toast = ({ message, type, onClose }: ToastProps) => {
 
     return (
         <div
-            className={`flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg animate-in slide-in-from-top-2 duration-300 ${type === "success"
-                ? "bg-[#6DC3BB] text-white"
+            className={`flex items-center gap-3 px-4 py-3 rounded-xl shadow-sm border border-gray-100 animate-in slide-in-from-top-2 duration-300 ${type === "success"
+                ? "bg-[var(--color-success)] text-white"
                 : type === "warning"
-                    ? "bg-[#F2AEBB] text-[#C04C63]"
-                    : "bg-white text-[#393D7E]"
+                    ? "bg-[var(--color-warning)] text-white"
+                    : type === "error"
+                        ? "bg-[var(--color-error)] text-white"
+                        : "bg-white text-[var(--text-body)]"
                 }`}
         >
             {type === "success" ? (

@@ -1,4 +1,3 @@
-import { useState } from "react";
 import {
   LayoutGrid,
   Users,
@@ -10,8 +9,6 @@ import {
   MapPin,
   ShieldAlert,
   BarChart2,
-  X,
-  Menu,
   Share2,
   Calendar,
 } from "lucide-react";
@@ -19,15 +16,31 @@ import { useNavigate, useLocation } from "react-router-dom";
 import type { User } from "../../types";
 import logo from "../../assets/logo.png";
 
+
 interface SidebarProps {
   user: User;
+  isExpanded: boolean;
+  toggleExpanded: () => void; // Kept for mobile/generic usage compatibility if needed, but primary logic is hover
 }
 
-export const Sidebar = ({ user }: SidebarProps) => {
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
+export const Sidebar = ({ isExpanded, toggleExpanded }: SidebarProps) => {
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Hover handlers logic wrapper
+  const handleMouseEnter = () => {
+    // Desktop only (>=1200px): Expand on hover
+    if (!isExpanded && window.innerWidth >= 1200) {
+      toggleExpanded();
+    }
+  };
+
+  const handleMouseLeave = () => {
+    // Desktop only (>=1200px): Collapse on leave
+    if (isExpanded && window.innerWidth >= 1200) {
+      toggleExpanded();
+    }
+  };
 
   const NavItem = ({ icon: Icon, label, id }: any) => {
     const isActive = location.pathname.includes(id);
@@ -36,32 +49,44 @@ export const Sidebar = ({ user }: SidebarProps) => {
       <button
         onClick={() => {
           navigate(`/${id}`);
-          setMobileOpen(false);
+          if (isExpanded && window.innerWidth < 768) {
+            toggleExpanded();
+          }
         }}
-        className={`flex items-center h-12 mb-1 transition-all duration-300 ease-in-out rounded-xl cursor-pointer 
+        className={`flex items-center h-12 mb-1 transition-all duration-300 ease-in-out rounded-xl cursor-pointer relative group overflow-hidden
           ${isExpanded ? "w-full gap-3 ml-0 pl-3" : "w-12 gap-0 ml-1 pl-2"}
           ${isActive
-            ? "bg-[#F39EB6] text-white shadow-sm font-semibold"
-            : "text-white/80 hover:bg-[#F39EB6]/20 hover:text-white"
+            ? "bg-[#F3F4FF] text-[var(--color-primary)]"
+            : "text-[var(--text-muted)] hover:bg-gray-50 hover:text-[var(--color-primary)]"
           } `}
       >
-        <div className="flex items-center justify-center w-8 h-8 transition-all duration-300 ease-in-out shrink-0">
+        {/* Active Indicator Bar (Left) */}
+        {
+          isActive && (
+            <div className="absolute left-0 top-2 bottom-2 w-1 bg-[var(--color-primary)] rounded-r-lg"></div>
+          )
+        }
+
+        <div className={`flex items-center justify-center w-8 h-8 transition-all duration-300 ease-in-out shrink-0`}>
           <Icon size={20} />
         </div>
+
+        {/* Text Label with Smooth Fade/Delay */}
         <span
-          className={`text-sm whitespace-nowrap overflow-hidden transition-all duration-300 ease-in-out ${isExpanded ? "max-w-40 opacity-100 ml-0" : "max-w-0 opacity-0 ml-0"
-            }`}
+          className={`text-sm font-medium whitespace-nowrap overflow-hidden transition-all duration-300 ease-in-out origin-left
+            ${isExpanded ? "max-w-[200px] opacity-100 ml-0 delay-75" : "max-w-0 opacity-0 ml-0 delay-0"}
+          `}
         >
           {label}
         </span>
-      </button>
+      </button >
     );
   };
 
   const SectionLabel = ({ label }: { label: string }) => (
     <p
-      className={`text-xs font-bold text-white/50 uppercase mb-3 tracking-wider whitespace-nowrap overflow-hidden transition-all duration-300 ease-in-out 
-        ${isExpanded ? "max-w-40 opacity-100 pl-6" : "max-w-0 opacity-0 pl-0"}
+      className={`text-xs font-bold text-[var(--text-muted)]/70 uppercase mb-3 tracking-wider whitespace-nowrap overflow-hidden transition-all duration-300 ease-in-out origin-left
+        ${isExpanded ? "max-w-40 opacity-100 pl-6 delay-75" : "max-w-0 opacity-0 pl-0 delay-0"}
       `}
     >
       {label}
@@ -71,54 +96,59 @@ export const Sidebar = ({ user }: SidebarProps) => {
 
   return (
     <>
-      {/* Mobile Toggle */}
-      <div className="fixed top-4 left-4 z-50 lg:hidden">
-        <button
-          onClick={() => setMobileOpen(!mobileOpen)}
-          className="p-2 bg-[#4D2B8C] text-white rounded-lg shadow-lg"
-        >
-          {mobileOpen ? <X size={24} /> : <Menu size={24} />}
-        </button>
-      </div>
+      {/* Mobile Toggle Trigger (Hamburger) is now in ProtectedLayout Header for better layout control, 
+          but we keep local state sync in mind if needed. 
+          Actually, the requirements say 'Start hidden, open as overlay'. 
+          The Trigger should be in the Header. Sidebar just needs to receive 'mobileOpen' prop or similar?
+          Wait, ProtectedLayout manages 'mobileOpen' via 'isSidebarExpanded'? 
+          No, ProtectedLayout currently passed 'isExpanded' props.
+          Let's assume 'toggleExpanded' on Mobile means 'Open/Close Drawer'.
+          And on Desktop/Tablet it means 'Expand/Collapse'.
+      */}
 
-      {/* Backdrop for mobile */}
-      {mobileOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
-          onClick={() => setMobileOpen(false)}
-        ></div>
-      )}
+      {/* Overlay Backdrop for Mobile */}
+      <div
+        className={`fixed inset-0 bg-black/50 z-40 transition-opacity duration-300 md:hidden ${isExpanded ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+          }`}
+        onClick={toggleExpanded}
+      />
 
       <div
-        onMouseEnter={() => setIsExpanded(true)}
-        onMouseLeave={() => setIsExpanded(false)}
-        className={`fixed left-0 top-0 h-screen bg-[#4D2B8C] text-white z-50 flex flex-col overflow-hidden transition-all duration-300 ease-in-out shadow-2xl 
-                ${mobileOpen
-            ? "translate-x-0 w-64"
-            : "-translate-x-full lg:translate-x-0"
-          } 
-                ${isExpanded ? "lg:w-64" : "lg:w-20"}`}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        className={`fixed left-0 top-0 h-screen bg-[var(--color-bg-surface)] border-r border-gray-100 z-50 flex flex-col overflow-hidden transition-all duration-300 ease-in-out
+                ${/* Width Logic */ ""}
+                ${isExpanded
+            ? "w-[260px] translate-x-0 shadow-2xl"
+            : "w-[80px] -translate-x-full md:translate-x-0 md:w-[80px]"
+          }
+        `}
       >
 
-        <div className="p-6 flex items-center gap-3 transition-all duration-300 ease-in-out pl-6 shrink-0">
+        {/* Brand Header */}
+        <div className="p-6 flex items-center gap-3 transition-all duration-300 ease-in-out pl-5 shrink-0 relative overflow-hidden h-[80px]">
           <img
             src={logo}
             alt="Logo"
-            className="w-8 h-8 rounded-lg flex-shrink-0 shadow-lg shadow-black/20"
+            className="w-8 h-8 rounded-lg flex-shrink-0"
           />
           <span
-            className={`font-bold text-xl tracking-tight text-white whitespace-nowrap overflow-hidden transition-all duration-300 ease-in-out ${isExpanded ? "max-w-40 opacity-100" : "max-w-0 opacity-0"
-              }`}
+            className={`font-bold text-xl tracking-tight text-[var(--text-heading)] whitespace-nowrap overflow-hidden transition-all duration-300 ease-in-out origin-left
+              ${isExpanded ? "max-w-[200px] opacity-100 delay-75" : "max-w-0 opacity-0 delay-0"}
+            `}
           >
-            KodingC.
+            KC Admin
           </span>
+
+          {/* Note: Toggle Button REMOVED as per requirements */}
         </div>
-        <div className="flex-1 overflow-y-auto overflow-x-hidden px-3 space-y-6 mt-6 sidebar-scrollbar min-h-0">
+
+        <div className="flex-1 overflow-y-auto overflow-x-hidden px-3 space-y-6 mt-2 sidebar-scrollbar min-h-0">
           <div>
-            <SectionLabel label="Main Menu" />
+            <SectionLabel label="Menu" />
             <NavItem icon={LayoutGrid} label="Dashboard" id="dashboard" />
             <NavItem icon={Users} label="Students" id="students" />
-            <NavItem icon={GraduationCap} label="Trainers" id="trainers" />
+            <NavItem icon={GraduationCap} label="Teachers" id="trainers" />
             <NavItem icon={BarChart2} label="Analytics" id="analytics" />
           </div>
           <div>
@@ -126,15 +156,17 @@ export const Sidebar = ({ user }: SidebarProps) => {
             <NavItem icon={MapPin} label="Regions" id="regions" />
             <NavItem icon={Share2} label="Allocations" id="allocations" />
             <NavItem icon={Calendar} label="Sessions" id="sessions" />
-            <NavItem icon={DollarSign} label="Finance" id="finance" />
+            <NavItem icon={DollarSign} label="Fees Collection" id="finance" />
             <NavItem icon={ShieldAlert} label="Safety" id="safety" />
-            <NavItem icon={BookOpen} label="Content" id="courses" />
+            <NavItem icon={BookOpen} label="Library" id="courses" />
           </div>
         </div>
-        <div className="p-3 space-y-1 bg-black/10 shrink-0 pb-6">
+        <div className="p-3 space-y-1 bg-white shrink-0 pb-6 border-t border-gray-50">
+          {/* Bottom items */}
           <NavItem icon={Settings} label="Settings" id="settings" />
+
           <button
-            className={`flex items-center h-12 text-white/80 hover:text-white hover:bg-white/10 rounded-xl transition-all duration-300 ease-in-out text-sm
+            className={`flex items-center h-12 text-[var(--text-muted)] hover:text-[#EF4444] hover:bg-red-50 rounded-xl transition-all duration-300 ease-in-out text-sm group overflow-hidden
               ${isExpanded ? "w-full gap-3 ml-0 pl-3" : "w-12 gap-0 ml-1 pl-2"}
             `}
             onClick={() => {
@@ -148,8 +180,9 @@ export const Sidebar = ({ user }: SidebarProps) => {
               <LogOut size={20} />
             </div>
             <span
-              className={`whitespace-nowrap overflow-hidden transition-all duration-300 ease-in-out ${isExpanded ? "max-w-40 opacity-100" : "max-w-0 opacity-0"
-                }`}
+              className={`whitespace-nowrap overflow-hidden font-medium transition-all duration-300 ease-in-out origin-left
+                ${isExpanded ? "max-w-[200px] opacity-100 delay-75" : "max-w-0 opacity-0 delay-0"}
+              `}
             >
               Log Out
             </span>

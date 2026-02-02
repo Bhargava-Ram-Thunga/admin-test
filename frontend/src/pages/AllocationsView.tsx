@@ -50,13 +50,13 @@ export const AllocationsView = ({ user: _user }: AllocationsViewProps) => {
 
     const getStatusColor = (status: string) => {
         switch (status) {
-            case "Pending": return "bg-yellow-100 text-yellow-800";
-            case "Approved": return "bg-[#4D2B8C]/10 text-[#4D2B8C]";
-            case "Active": return "bg-green-100 text-green-800";
-            case "Rejected": return "bg-red-100 text-red-800";
-            case "Completed": return "bg-[#F39EB6]/10 text-[#4D2B8C]";
-            case "Cancelled": return "bg-gray-100 text-gray-800";
-            default: return "bg-gray-100 text-gray-800";
+            case "Pending": return "bg-[var(--color-warning)]/10 text-[var(--color-warning)] border border-[var(--color-warning)]/20";
+            case "Approved": return "bg-[var(--color-primary)]/10 text-[var(--color-primary)] border border-[var(--color-primary)]/20";
+            case "Active": return "bg-[var(--color-success)]/10 text-[var(--color-success)] border border-[var(--color-success)]/20";
+            case "Rejected": return "bg-[var(--color-error)]/10 text-[var(--color-error)] border border-[var(--color-error)]/20";
+            case "Completed": return "bg-[var(--color-info)]/10 text-[var(--color-info)] border border-[var(--color-info)]/20";
+            case "Cancelled": return "bg-gray-100 text-[var(--text-muted)] border border-gray-200";
+            default: return "bg-gray-100 text-[var(--text-muted)] border border-gray-200";
         }
     };
 
@@ -132,7 +132,7 @@ export const AllocationsView = ({ user: _user }: AllocationsViewProps) => {
 
     const AllocationDetail = ({ allocation, onClose }: { allocation: Allocation; onClose: () => void }) => (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-            <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in duration-200">
+            <div className="bg-white rounded-xl shadow-none border-gray-200 border w-full max-w-4xl max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in duration-200">
                 <div className="p-6 border-b border-gray-100 flex justify-between items-center sticky top-0 bg-white z-10">
                     <div>
                         <h2 className="text-2xl font-bold text-gray-800">Allocation Details</h2>
@@ -157,7 +157,7 @@ export const AllocationsView = ({ user: _user }: AllocationsViewProps) => {
                         {/* Student Info */}
                         <div className="space-y-4">
                             <h3 className="text-lg font-semibold flex items-center gap-2">
-                                <User size={20} className="text-[#4D2B8C]" /> Student Details
+                                <User size={20} className="text-[var(--color-primary)]" /> Student Details
                             </h3>
                             <div className="bg-gray-50 p-4 rounded-lg space-y-2 border border-gray-100">
                                 <p><span className="text-gray-500">Name:</span> {allocation.studentName}</p>
@@ -168,7 +168,7 @@ export const AllocationsView = ({ user: _user }: AllocationsViewProps) => {
                         {/* Trainer Info */}
                         <div className="space-y-4">
                             <h3 className="text-lg font-semibold flex items-center gap-2">
-                                <GraduationCap size={20} className="text-[#F39EB6]" /> Trainer Details
+                                <GraduationCap size={20} className="text-[var(--color-warning)]" /> Trainer Details
                             </h3>
                             <div className="bg-gray-50 p-4 rounded-lg space-y-2 border border-gray-100">
                                 {allocation.trainerId ? (
@@ -181,7 +181,7 @@ export const AllocationsView = ({ user: _user }: AllocationsViewProps) => {
                                         <p className="text-yellow-600 italic">No trainer assigned yet</p>
                                         <button
                                             onClick={() => setIsReallocateModalOpen(true)}
-                                            className="text-sm text-[#4D2B8C] font-bold hover:underline self-start"
+                                            className="text-sm text-[var(--color-primary)] font-bold hover:underline self-start"
                                         >
                                             Assign Manually
                                         </button>
@@ -217,8 +217,8 @@ export const AllocationsView = ({ user: _user }: AllocationsViewProps) => {
                                 return (
                                     <div key={i} className="min-w-[100px] bg-gray-50 p-3 rounded-lg border border-gray-100 flex flex-col items-center text-center gap-1">
                                         <span className="text-xs font-bold text-gray-500">Session {i + 1}</span>
-                                        <div className={`w-3 h-3 rounded-full ${status === 'Completed' ? 'bg-green-500' :
-                                                status === 'Scheduled' ? 'bg-blue-500' : 'bg-gray-300'
+                                        <div className={`w-3 h-3 rounded-full ${status === 'Completed' ? 'bg-[var(--color-success)]' :
+                                            status === 'Scheduled' ? 'bg-[var(--color-info)]' : 'bg-gray-300'
                                             }`} />
                                         <span className="text-[10px] text-gray-400">{new Date(new Date().setDate(new Date().getDate() + i)).toLocaleDateString().slice(0, 5)}</span>
                                     </div>
@@ -233,7 +233,7 @@ export const AllocationsView = ({ user: _user }: AllocationsViewProps) => {
                             <>
                                 <button
                                     onClick={() => handleStatusChange(allocation.id, 'Approved')}
-                                    className="px-6 py-2 bg-[#4D2B8C] text-white rounded-lg hover:bg-[#4D2B8C]/90 font-medium shadow-lg shadow-[#4D2B8C]/20"
+                                    className="px-6 py-2 bg-[var(--color-primary)] text-white rounded-lg hover:bg-[var(--color-primary)]/90 font-medium shadow-none"
                                 >
                                     Approve & Assign
                                 </button>
@@ -248,7 +248,7 @@ export const AllocationsView = ({ user: _user }: AllocationsViewProps) => {
                         {allocation.status === 'Active' && (
                             <button
                                 onClick={() => setIsReallocateModalOpen(true)}
-                                className="px-6 py-2 bg-[#F39EB6]/10 text-[#4D2B8C] rounded-lg hover:bg-[#F39EB6]/20 font-medium flex items-center gap-2"
+                                className="px-6 py-2 bg-[var(--color-warning)]/10 text-[var(--color-primary)] rounded-lg hover:bg-[var(--color-warning)]/20 font-medium flex items-center gap-2"
                             >
                                 <RefreshCw size={18} /> Reallocate Trainer
                             </button>
@@ -287,7 +287,7 @@ export const AllocationsView = ({ user: _user }: AllocationsViewProps) => {
                     )}
                     <button
                         onClick={() => setIsCreateModalOpen(true)}
-                        className="flex items-center gap-2 px-4 py-2 bg-[#4D2B8C] text-white rounded-lg hover:bg-[#4D2B8C]/90 transition-colors shadow-lg shadow-[#4D2B8C]/20"
+                        className="flex items-center gap-2 px-4 py-2 bg-[var(--color-primary)] text-white rounded-lg hover:bg-[var(--color-primary)]/90 transition-colors shadow-none"
                     >
                         <Plus size={20} />
                         Create Allocation
@@ -307,8 +307,8 @@ export const AllocationsView = ({ user: _user }: AllocationsViewProps) => {
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id as any)}
                         className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all ${activeTab === tab.id
-                            ? "bg-[#4D2B8C]/5 text-[#4D2B8C] shadow-sm"
-                            : "text-gray-500 hover:bg-gray-50 hover:text-gray-700"
+                            ? "bg-[var(--color-primary)]/10 text-[var(--color-primary)] border border-[var(--color-primary)]/10 shadow-none"
+                            : "text-[var(--text-muted)] hover:bg-gray-50 hover:text-[var(--text-body)]"
                             }`}
                     >
                         {tab.label}
@@ -337,7 +337,7 @@ export const AllocationsView = ({ user: _user }: AllocationsViewProps) => {
             {/* Table */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                 <div className="overflow-x-auto">
-                    <table className="w-full">
+                    <table className="w-full min-w-[1000px]">
                         <thead className="bg-gray-50 border-b border-gray-100">
                             <tr>
                                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Allocation ID</th>
@@ -359,7 +359,7 @@ export const AllocationsView = ({ user: _user }: AllocationsViewProps) => {
                                         setIsDetailOpen(true);
                                     }}
                                 >
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-[#4D2B8C]">
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-[var(--color-primary)]">
                                         {allocation.id}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
@@ -383,7 +383,7 @@ export const AllocationsView = ({ user: _user }: AllocationsViewProps) => {
                                         {activeTab === 'auto' && allocation.status === 'Pending' ? (
                                             <button
                                                 onClick={(e) => { e.stopPropagation(); handleRetryAutoAssign(allocation.id); }}
-                                                className="p-2 text-[#4D2B8C] hover:bg-[#4D2B8C]/10 rounded-full"
+                                                className="p-2 text-[var(--color-primary)] hover:bg-[var(--color-primary)]/10 rounded-full"
                                                 title="Retry Auto-Assign"
                                             >
                                                 <RotateCcw size={18} />

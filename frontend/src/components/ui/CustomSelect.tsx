@@ -8,6 +8,8 @@ interface CustomSelectProps {
     icon?: LucideIcon;
     disabled?: boolean;
     placeholder?: string;
+    className?: string;
+    fullWidth?: boolean;
 }
 
 export const CustomSelect = ({
@@ -18,10 +20,12 @@ export const CustomSelect = ({
     icon: Icon,
     disabled,
     placeholder,
+    className,
+    fullWidth = true,
 }: CustomSelectProps) => (
-    <div className="flex flex-col gap-1 w-full min-w-[140px]">
+    <div className={`flex flex-col gap-1 ${fullWidth ? "w-full" : ""} min-w-[140px] ${className || ""}`}>
         <label
-            className={`text-[10px] font-bold uppercase tracking-wider pl-1 ${disabled ? "text-gray-300" : "text-[#4D2B8C]/50"
+            className={`text-[10px] font-bold uppercase tracking-wider pl-1 ${disabled ? "text-gray-300" : "text-[var(--text-muted)]"
                 }`}
         >
             {label}
@@ -32,7 +36,7 @@ export const CustomSelect = ({
                     size={14}
                     className={`absolute left-3 top-1/2 -translate-y-1/2 transition-colors ${disabled
                         ? "text-gray-300"
-                        : "text-[#4D2B8C]/40 group-hover:text-[#F39EB6]"
+                        : "text-[var(--color-primary)]/40 group-hover:text-[var(--color-primary)]"
                         }`}
                 />
             )}
@@ -44,7 +48,7 @@ export const CustomSelect = ({
                     } pr-8 outline-none transition-all cursor-pointer shadow-sm
               ${disabled
                         ? "border-gray-100 text-gray-300 cursor-not-allowed"
-                        : "border-[#4D2B8C]/10 text-[#4D2B8C] hover:bg-[#F5F7FA] focus:ring-2 focus:ring-[#F39EB6]"
+                        : "border-gray-200 text-[var(--color-primary)] hover:bg-gray-50 focus:ring-2 focus:ring-[var(--color-primary)]/20 focus:border-[var(--color-primary)]"
                     }`}
             >
                 {placeholder && (
@@ -60,7 +64,7 @@ export const CustomSelect = ({
             </select>
             <ChevronDown
                 size={14}
-                className={`absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none ${disabled ? "text-gray-300" : "text-[#4D2B8C]/40"
+                className={`absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none ${disabled ? "text-gray-300" : "text-[var(--color-primary)]/40"
                     }`}
             />
         </div>

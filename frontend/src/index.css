@@ -1,14 +1,25 @@
 @import "tailwindcss";
 
 :root {
-  --color-primary-purple: #4D2B8C;
-  /* Deep Purple */
-  --color-accent-blue: #3498db;
-  /* Light Blue */
-  --color-bg-light: #F0F7FF;
-  /* Soft Blue */
-  --color-secondary-purple: #F39EB6;
-  /* Pastel Pink */
+  /* Strict Global Color System */
+  --color-primary: #6D5DFB;
+  /* Purple */
+  --color-success: #22C55E;
+  /* Green */
+  --color-warning: #F59E0B;
+  /* Orange */
+  --color-error: #EF4444;
+  /* Red */
+  --color-info: #06B6D4;
+  /* Cyan */
+
+  --color-bg-app: #F9FAFB;
+  /* Soft off-white */
+  --color-bg-surface: #FFFFFF;
+
+  --color-text-heading: #111827;
+  --color-text-body: #4B5563;
+  --color-text-muted: #9CA3AF;
 }
 
 /* Custom Scrollbar Utility */

@@ -16,9 +16,9 @@ export const Modal = ({ isOpen, onClose, title, children }: ModalProps) => {
                 className="absolute inset-0 bg-black/60 backdrop-blur-sm"
                 onClick={onClose}
             ></div>
-            <div className="bg-white rounded-3xl w-full max-w-lg relative z-10 shadow-2xl animate-in fade-in zoom-in duration-200">
-                <div className="flex justify-between items-center p-6 border-b border-[#F5F7FA]">
-                    <h3 className="text-xl font-bold text-[#393D7E]">{title}</h3>
+            <div className="bg-white rounded-2xl w-full max-w-lg relative z-10 border border-gray-200 animate-in fade-in zoom-in duration-200">
+                <div className="flex justify-between items-center p-6 border-b border-gray-100">
+                    <h3 className="text-xl font-bold text-[var(--text-heading)]">{title}</h3>
                     <button
                         onClick={onClose}
                         className="p-2 hover:bg-[#F5F7FA] rounded-xl transition-colors text-[#5459AC]"

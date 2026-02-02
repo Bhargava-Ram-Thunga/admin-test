@@ -10,8 +10,8 @@ interface SessionDetailModalProps {
 export const SessionDetailModal = ({ session, onClose, onReschedule }: SessionDetailModalProps) => {
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-            <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
-                <div className="relative h-32 bg-[#4D2B8C]">
+            <div className="bg-white rounded-2xl border border-gray-200 w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+                <div className="relative h-32 bg-[var(--color-primary)]">
                     <button
                         onClick={onClose}
                         className="absolute top-4 right-4 p-2 bg-black/20 hover:bg-black/30 text-white rounded-lg transition"
@@ -35,15 +35,15 @@ export const SessionDetailModal = ({ session, onClose, onReschedule }: SessionDe
                     <div className="grid grid-cols-2 gap-6">
                         <div className="space-y-1">
                             <p className="text-xs font-bold text-gray-400 uppercase">Subject</p>
-                            <div className="flex items-center gap-2 font-semibold text-gray-700">
-                                <BookOpen size={18} className="text-[#4D2B8C]" />
+                            <div className="flex items-center gap-2 font-semibold text-[var(--text-body)]">
+                                <BookOpen size={18} className="text-[var(--color-primary)]" />
                                 {session.courseName}
                             </div>
                         </div>
                         <div className="space-y-1">
-                            <p className="text-xs font-bold text-gray-400 uppercase">Trainer</p>
-                            <div className="flex items-center gap-2 font-semibold text-gray-700">
-                                <User size={18} className="text-[#F39EB6]" />
+                            <p className="text-xs font-bold text-[var(--text-muted)] uppercase">Trainer</p>
+                            <div className="flex items-center gap-2 font-semibold text-[var(--text-body)]">
+                                <User size={18} className="text-[var(--color-primary)]" />
                                 {session.trainerName}
                             </div>
                         </div>
@@ -59,8 +59,8 @@ export const SessionDetailModal = ({ session, onClose, onReschedule }: SessionDe
                                 </div>
                             </div>
                             <div className={`px-3 py-1 rounded-full text-xs font-bold ${session.status === 'Completed' ? 'bg-green-100 text-green-700' :
-                                    session.status === 'Scheduled' ? 'bg-blue-100 text-blue-700' :
-                                        'bg-gray-100 text-gray-700'
+                                session.status === 'Scheduled' ? 'bg-blue-100 text-blue-700' :
+                                    'bg-gray-100 text-gray-700'
                                 }`}>
                                 {session.status}
                             </div>
@@ -91,11 +91,11 @@ export const SessionDetailModal = ({ session, onClose, onReschedule }: SessionDe
                     <div className="flex gap-4">
                         <button
                             onClick={onReschedule}
-                            className="flex-1 py-3 border border-gray-200 rounded-xl font-bold text-gray-700 hover:bg-gray-50 transition"
+                            className="flex-1 py-3 border border-gray-200 rounded-xl font-bold text-[var(--text-body)] hover:bg-gray-50 transition"
                         >
                             Reschedule Session
                         </button>
-                        <button className="flex-1 py-3 bg-[#4D2B8C] text-white rounded-xl font-bold hover:bg-[#3d2270] transition shadow-lg shadow-[#4D2B8C]/20">
+                        <button className="flex-1 py-3 bg-[var(--color-primary)] text-white rounded-xl font-bold hover:bg-[var(--color-primary)]/90 transition shadow-none border border-transparent">
                             Download Report
                         </button>
                     </div>

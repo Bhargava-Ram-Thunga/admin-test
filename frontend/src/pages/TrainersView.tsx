@@ -55,22 +55,22 @@ export const TrainersView = ({
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-[#4D2B8C]">
+          <h1 className="text-2xl font-bold text-[var(--text-heading)]">
             Trainer Management
           </h1>
-          <p className="text-sm text-[#4D2B8C]">
+          <p className="text-sm text-[var(--text-muted)]">
             Monitor workload and capacity
           </p>
         </div>
 
         <div className="flex gap-2">
           {/* Capacity Filter */}
-          <div className="bg-white px-3 py-2 rounded-xl border border-[#4D2B8C]/10 flex items-center gap-2 text-[#4D2B8C] shadow-sm">
-            <Activity size={16} />
+          <div className="bg-white px-3 py-2 rounded-xl border border-gray-200 flex items-center gap-2 text-[var(--text-body)] shadow-sm">
+            <Activity size={16} className="text-[var(--color-primary)]" />
             <select
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
-              className="bg-transparent outline-none text-sm font-bold text-[#4D2B8C] cursor-pointer"
+              className="bg-transparent outline-none text-sm font-bold text-[var(--color-primary)] cursor-pointer"
             >
               <option value="All">All Status</option>
               <option value="Free">Free Slots</option>
@@ -78,7 +78,7 @@ export const TrainersView = ({
             </select>
           </div>
 
-          <button className="bg-[#4D2B8C] text-white px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-[#F39EB6] transition shadow-lg shadow-[#4D2B8C]/20">
+          <button className="bg-[var(--color-primary)] text-white px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-[var(--color-primary)]/90 transition shadow-none border border-transparent">
             <Plus size={16} /> Add Trainer
           </button>
         </div>
@@ -94,50 +94,50 @@ export const TrainersView = ({
           return (
             <Card
               key={t.id}
-              className="flex flex-col items-center text-center relative group hover:shadow-xl transition-all"
+              className="flex flex-col items-center text-center relative group hover:border-[var(--color-primary)] transition-all"
             >
               <div className="relative mb-4">
                 <img
                   src={t.avatarUrl}
-                  className="w-20 h-20 rounded-full border-4 border-[#F5F7FA]"
+                  className="w-20 h-20 rounded-full border-4 border-gray-50"
                   alt={t.name}
                 />
                 <div
-                  className={`absolute bottom-0 right-0 w-5 h-5 border-4 border-white rounded-full ${t.status === "Active" ? "bg-[#4D2B8C]" : "bg-gray-300"
+                  className={`absolute bottom-0 right-0 w-5 h-5 border-4 border-white rounded-full ${t.status === "Active" ? "bg-[var(--color-success)]" : "bg-gray-300"
                     }`}
                 ></div>
               </div>
 
-              <h3 className="font-bold text-[#4D2B8C] text-lg">{t.name}</h3>
-              <p className="text-xs font-bold text-[#4D2B8C] uppercase mb-4">
+              <h3 className="font-bold text-[var(--text-heading)] text-lg">{t.name}</h3>
+              <p className="text-xs font-bold text-[var(--text-muted)] uppercase mb-4">
                 {t.regionName}
               </p>
 
               <div className="flex gap-2 mb-6">
                 <span
                   className={`px-3 py-1 rounded-full text-xs font-bold border ${isFull
-                      ? "bg-[#F39EB6]/10 text-[#4D2B8C] border-[#F39EB6]/20"
-                      : "bg-[#4D2B8C]/10 text-[#4D2B8C] border-[#4D2B8C]/20"
+                    ? "bg-[var(--color-warning)]/10 text-[var(--color-warning)] border-[var(--color-warning)]/20"
+                    : "bg-[var(--color-primary)]/10 text-[var(--color-primary)] border-[var(--color-primary)]/20"
                     }`}
                 >
                   {isFull ? "Fully Booked" : "Free Slots"}
                 </span>
-                <span className="bg-[#F5F7FA] text-[#4D2B8C] px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1">
+                <span className="bg-gray-50 text-[var(--text-body)] px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1">
                   ★ {t.rating}
                 </span>
               </div>
 
               {/* Capacity Bar */}
-              <div className="w-full pt-4 border-t border-[#F5F7FA]">
-                <div className="flex justify-between text-xs font-bold text-[#4D2B8C] mb-2">
+              <div className="w-full pt-4 border-t border-gray-100">
+                <div className="flex justify-between text-xs font-bold text-[var(--text-muted)] mb-2">
                   <span>Capacity</span>
                   <span>
                     {assignedCount} / {capacity}
                   </span>
                 </div>
-                <div className="w-full h-2 bg-[#F5F7FA] rounded-full overflow-hidden">
+                <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
                   <div
-                    className={`h-full rounded-full transition-all duration-500 ${isFull ? "bg-[#F39EB6]" : "bg-[#4D2B8C]"
+                    className={`h-full rounded-full transition-all duration-500 ${isFull ? "bg-[var(--color-warning)]" : "bg-[var(--color-primary)]"
                       }`}
                     style={{ width: `${Math.min(100, percentage)}%` }}
                   ></div>
@@ -147,7 +147,7 @@ export const TrainersView = ({
           );
         })}
         {filteredTrainers.length === 0 && (
-          <div className="col-span-full py-12 text-center text-[#4D2B8C] border-2 border-dashed border-[#4D2B8C]/10 rounded-3xl">
+          <div className="col-span-full py-12 text-center text-[var(--text-muted)] border-2 border-dashed border-[var(--color-primary)]/10 rounded-3xl">
             No trainers found matching the current filters.
           </div>
         )}

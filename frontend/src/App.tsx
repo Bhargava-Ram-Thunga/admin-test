@@ -42,7 +42,7 @@ export default function App() {
   // Wrapper components to pass props (since Route element expects a ReactNode)
   const DashboardWrapper = () => {
     const { user } = useOutletContext<AuthContextType>();
-    return <DashboardView user={user} students={students} />;
+    return <DashboardView user={user} />;
   };
 
   const AnalyticsWrapper = () => {
