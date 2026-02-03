@@ -1,11 +1,12 @@
 import { useState } from "react";
-import { Eye, ArrowRight } from "lucide-react";
+import { Eye, EyeOff, ArrowRight } from "lucide-react";
 import { THEME } from "../constants/theme";
 import { INITIAL_USERS } from "../data/mockData";
 import { setSession } from "../utils/auth";
 import { useNavigate } from "react-router-dom";
 import type { User } from "../types";
 import { Carousel } from "../components/ui/Carousel";
+import { api, ADMIN_API } from "../api/client";
 
 const CAROUSEL_IMAGES = [
   "https://www.kodingcaravan.com/flyers/img01.webp",
@@ -15,26 +16,63 @@ const CAROUSEL_IMAGES = [
 
 export const Login = () => {
   const navigate = useNavigate();
-  const [email, setEmail] = useState("state.admin@kodingc.com");
-  const [password, setPassword] = useState("123");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    const user = INITIAL_USERS.find((u) => u.email === email) as
-      | User
-      | undefined;
-    if (!user) {
-      setError("Invalid email address");
+    setError("");
+    if (!email.trim()) {
+      setError("Please enter your email");
       return;
     }
-    if (user.password !== password) {
-      setError("Invalid password");
+    if (!password) {
+      setError("Please enter your password");
       return;
     }
-    setSession(user);
-    navigate("/dashboard");
+    setLoading(true);
+    try {
+      const res = await api.post<{
+        success: boolean;
+        data?: {
+          admin: { id: string; email: string; fullName: string | null; roles?: { code: string; name?: string }[] };
+          tokens: { accessToken: string; refreshToken: string };
+        };
+      }>(`${ADMIN_API}/auth/login`, { email: email.trim(), password });
+      const data = res as { success?: boolean; data?: { admin: { id: string; email: string; fullName: string | null; roles?: { code: string; name?: string }[] }; tokens: { accessToken: string; refreshToken: string } } };
+      if (data.success && data.data?.admin && data.data?.tokens) {
+        const admin = data.data.admin;
+        const roleName = admin.roles?.[0]?.name ?? admin.roles?.[0]?.code ?? "Admin";
+        const user: User = {
+          id: admin.id,
+          email: admin.email,
+          name: admin.fullName ?? admin.email,
+          role: roleName,
+          regionId: "ALL",
+          avatarUrl: `https://i.pravatar.cc/150?u=${admin.email}`,
+        };
+        setSession(user, data.data.tokens);
+        navigate("/dashboard");
+        return;
+      }
+    } catch (err: unknown) {
+      let message = "Invalid email or password";
+      if (err instanceof Error && err.message) {
+        try {
+          const parsed = JSON.parse(err.message) as { message?: string };
+          if (parsed?.message) message = parsed.message;
+        } catch {
+          if (err.message && !err.message.startsWith("{")) message = err.message;
+        }
+      }
+      setError(message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -126,17 +164,23 @@ export const Login = () => {
               </label>
               <div className="relative">
                 <input
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full p-4 bg-[#4D2B8C]/50 border border-[#ffffff]/20 rounded-xl outline-none focus:border-[#F39EB6] transition text-white placeholder-slate-300 text-base font-medium"
+                  className="w-full p-4 pr-12 bg-[#4D2B8C]/50 border border-[#ffffff]/20 rounded-xl outline-none focus:border-[#F39EB6] transition text-white placeholder-slate-300 text-base font-medium"
                   placeholder="Enter your password"
                 />
                 <button
                   type="button"
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300"
+                  onClick={() => setShowPassword((p) => !p)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 focus:outline-none"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
                 >
-                  <Eye size={20} />
+                  {showPassword ? (
+                    <EyeOff size={20} />
+                  ) : (
+                    <Eye size={20} />
+                  )}
                 </button>
               </div>
             </div>
@@ -152,12 +196,18 @@ export const Login = () => {
                 Forgot password?
               </a>
             </div>
-            <button className="w-full py-4 bg-[#F39EB6] hover:bg-[#F39EB6]/90 text-white font-bold rounded-xl transition shadow-lg shadow-[#F39EB6]/30 flex items-center justify-center gap-2 group text-lg mt-4">
-              Sign in{" "}
-              <ArrowRight
-                size={20}
-                className="group-hover:translate-x-1 transition-transform"
-              />
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-4 bg-[#F39EB6] hover:bg-[#F39EB6]/90 disabled:opacity-70 text-white font-bold rounded-xl transition shadow-lg shadow-[#F39EB6]/30 flex items-center justify-center gap-2 group text-lg mt-4"
+            >
+              {loading ? "Signing in…" : "Sign in"}{" "}
+              {!loading && (
+                <ArrowRight
+                  size={20}
+                  className="group-hover:translate-x-1 transition-transform"
+                />
+              )}
             </button>
           </form>
           <p className="mt-10 text-center text-sm text-slate-500">

@@ -1,3 +1,4 @@
+/** Settings: No admin settings API in backend. UI uses mock hierarchy and invite flow. */
 import { useState, useMemo } from "react";
 import { Card } from "../components/ui/Card";
 import type { User, HierarchyNode } from "../types";

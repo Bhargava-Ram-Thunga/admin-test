@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import {
     Search,
     Filter,
@@ -11,11 +11,32 @@ import {
     XCircle,
     ChevronLeft,
     ChevronRight,
-    AlertTriangle
+    AlertTriangle,
+    RefreshCw
 } from "lucide-react";
-import { MOCK_SESSIONS, MOCK_RESCHEDULES, MOCK_CALENDAR_SESSIONS } from "../data/mockData";
+import { MOCK_SESSIONS, MOCK_CALENDAR_SESSIONS } from "../data/mockData";
 import { SessionDetailModal } from "../components/modals/SessionDetailModal";
 import type { Session, RescheduleRequest, VerificationStatus } from "../types";
+import { getData, postData, ADMIN_API } from "../api/client";
+import type { RescheduleApiRow } from "../api/types";
+
+function mapRescheduleRow(row: RescheduleApiRow): RescheduleRequest {
+    return {
+        id: row.id,
+        sessionId: row.sessionId,
+        studentName: row.studentId,
+        trainerName: row.trainerId,
+        courseName: "",
+        originalDate: row.originalDate?.slice(0, 10) ?? "",
+        originalTime: row.originalTime ?? "",
+        newDate: row.newDate?.slice(0, 10) ?? "",
+        newTime: row.newTime ?? "",
+        requestedBy: row.requestType === "student" ? "Student" : "Trainer",
+        reason: row.reason,
+        status: row.status.charAt(0).toUpperCase() + row.status.slice(1).toLowerCase() as RescheduleRequest["status"],
+        requestedAt: row.createdAt ?? "",
+    };
+}
 
 interface SessionsViewProps {
     user: any;
@@ -27,9 +48,25 @@ export const SessionsView = ({ user: _user }: SessionsViewProps) => {
     const [selectedSession, setSelectedSession] = useState<Session | null>(null);
     const [isDetailOpen, setIsDetailOpen] = useState(false);
 
-    // Mock State
-    const [sessions, setSessions] = useState<Session[]>(MOCK_SESSIONS as unknown as Session[]);
-    const [reschedules, setReschedules] = useState<RescheduleRequest[]>(MOCK_RESCHEDULES as unknown as RescheduleRequest[]);
+    // Reschedules from backend; sessions "all" has no list API — backend only has per-student/per-trainer
+    const [reschedules, setReschedules] = useState<RescheduleRequest[]>([]);
+    const [reschedulesLoading, setReschedulesLoading] = useState(true);
+    const [reschedulesError, setReschedulesError] = useState<string | null>(null);
+    const fetchReschedules = useCallback(async () => {
+        setReschedulesLoading(true);
+        setReschedulesError(null);
+        const data = await getData<RescheduleApiRow[]>(`${ADMIN_API}/reschedule`).catch((e) => {
+            setReschedulesError(e instanceof Error ? e.message : "Failed to load reschedules");
+            return [];
+        });
+        setReschedules(Array.isArray(data) ? data.map(mapRescheduleRow) : []);
+        setReschedulesLoading(false);
+    }, []);
+    useEffect(() => {
+        if (activeTab === "reschedule") fetchReschedules();
+    }, [activeTab, fetchReschedules]);
+
+    const [sessions] = useState<Session[]>(MOCK_SESSIONS as unknown as Session[]);
 
     // Calendar State
     const [currentDate, setCurrentDate] = useState(new Date());
@@ -81,23 +118,15 @@ export const SessionsView = ({ user: _user }: SessionsViewProps) => {
         }
     };
 
-    // HANDLERS
-    const handleRescheduleAction = (id: string, action: 'Approved' | 'Rejected') => {
-        console.log(`Reschedule request ${id} ${action}`);
-        // TODO: Enable API integration
-        /*
-        api.post(`/reschedules/${id}/${action.toLowerCase()}`);
-        */
-        const updated = reschedules.map(r => r.id === id ? { ...r, status: action } : r);
-        setReschedules(updated);
+    const handleRescheduleAction = async (id: string, action: 'Approved' | 'Rejected') => {
+        if (action === "Approved") await postData(`${ADMIN_API}/reschedule/${id}/approve`, {});
+        else await postData(`${ADMIN_API}/reschedule/${id}/reject`, { rejectionReason: "Rejected by admin" });
+        await fetchReschedules();
     };
 
+    // Session reschedule from detail: backend has reschedule request flow; no direct "cancel session" from this UI
     const handleSessionReschedule = () => {
-        if (selectedSession) {
-            const updated = sessions.map(s => s.id === selectedSession.id ? { ...s, status: "Cancelled" as "Cancelled" } : s);
-            setSessions(updated);
-        }
-        alert("Session rescheduled (Mock: Status set to Cancelled)");
+        alert("Use Reschedule Requests tab to approve/reject reschedule requests. No backend API for direct session cancel from here.");
         setIsDetailOpen(false);
     };
 
@@ -407,7 +436,24 @@ export const SessionsView = ({ user: _user }: SessionsViewProps) => {
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                     <div className="p-4 border-b border-gray-100 flex justify-between items-center">
                         <h2 className="font-semibold text-gray-700">Reschedule Requests</h2>
+                        <button onClick={() => fetchReschedules()} className="flex items-center gap-2 px-3 py-1.5 border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50" title="Refresh">
+                            <RefreshCw size={16} className={reschedulesLoading ? "animate-spin" : ""} />
+                            Refresh
+                        </button>
                     </div>
+                    {reschedulesError && (
+                        <div className="p-4 bg-red-50 border-b border-red-100 text-red-800 text-sm flex items-center justify-between">
+                            <span>{reschedulesError}</span>
+                            <button onClick={() => fetchReschedules()} className="px-2 py-1 bg-red-100 hover:bg-red-200 rounded text-xs font-medium">Retry</button>
+                        </div>
+                    )}
+                    {reschedulesLoading && reschedules.length === 0 && (
+                        <div className="p-8 text-center text-gray-500">Loading reschedule requests…</div>
+                    )}
+                    {!reschedulesLoading && reschedules.length === 0 && !reschedulesError && (
+                        <div className="p-8 text-center text-gray-500">No reschedule requests.</div>
+                    )}
+                    {!reschedulesLoading && reschedules.length > 0 && (
                     <table className="w-full">
                         <thead className="bg-gray-50 border-b border-gray-100">
                             <tr>
@@ -451,15 +497,9 @@ export const SessionsView = ({ user: _user }: SessionsViewProps) => {
                                     </td>
                                 </tr>
                             ))}
-                            {reschedules.length === 0 && (
-                                <tr>
-                                    <td colSpan={8} className="px-6 py-12 text-center text-gray-400">
-                                        No reschedule requests found.
-                                    </td>
-                                </tr>
-                            )}
                         </tbody>
                     </table>
+                    )}
                 </div>
             )}
 

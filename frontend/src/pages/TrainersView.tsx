@@ -1,8 +1,24 @@
-import { useState, useMemo } from "react";
-import { Activity, Plus } from "lucide-react";
+import { useState, useMemo, useEffect, useCallback } from "react";
+import { Activity, Plus, RefreshCw } from "lucide-react";
 import { Card } from "../components/ui/Card";
 import { checkPermission } from "../utils/helpers";
 import type { Student, Trainer, User } from "../types";
+import { getData } from "../api/client";
+import type { TrainerApiRow } from "../api/types";
+
+function mapTrainerRow(row: TrainerApiRow): Trainer {
+  return {
+    id: row.trainerId,
+    name: row.fullName ?? row.trainerId,
+    regionId: row.state ?? "",
+    regionName: row.city ?? row.state ?? "",
+    status: row.verified ? "Active" : "Pending",
+    students: row.activeStudents ?? 0,
+    capacity: 30,
+    rating: row.ratingAverage ?? 0,
+    avatarUrl: `https://i.pravatar.cc/150?u=${row.trainerId}`,
+  };
+}
 
 interface TrainersViewProps {
   user: User;
@@ -17,12 +33,33 @@ interface TrainersViewProps {
 
 export const TrainersView = ({
   user,
-  trainers,
+  trainers: trainersProp,
   students,
 }: TrainersViewProps) => {
-  const [filter, setFilter] = useState("All"); // "All" | "Free" | "Fully Booked"
+  const [trainers, setTrainersLocal] = useState<Trainer[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [filter, setFilter] = useState("All");
 
-  // Derive data logic
+  const fetchTrainers = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    const params = new URLSearchParams();
+    params.set("limit", "100");
+    const q = params.toString();
+    const path = `/api/v1/trainers${q ? `?${q}` : ""}`;
+    const res = await getData<{ data: TrainerApiRow[]; total: number; page: number; limit: number }>(path).catch((e) => {
+      setError(e instanceof Error ? e.message : "Failed to load trainers");
+      return { data: [], total: 0, page: 1, limit: 100 };
+    });
+    setTrainersLocal(Array.isArray(res?.data) ? res.data.map(mapTrainerRow) : []);
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    fetchTrainers();
+  }, [fetchTrainers]);
+
   const getAssignedCount = (trainerId: string) => {
     return students.filter(
       (s) => s.mentorId === trainerId && s.status === "Active"
@@ -30,10 +67,7 @@ export const TrainersView = ({
   };
 
   const filteredTrainers = useMemo(() => {
-    // 1. Scope Permission
-    let result = trainers.filter((t) => checkPermission(user, t.regionId));
-
-    // 2. Capacity Filter
+    let result = trainers.filter((t) => !user.regionId || user.regionId === "ALL" || checkPermission(user, t.regionId));
     if (filter === "Free") {
       result = result.filter((t) => {
         const count = getAssignedCount(t.id);
@@ -47,12 +81,17 @@ export const TrainersView = ({
         return count >= capacity;
       });
     }
-
     return result;
   }, [trainers, students, user, filter]);
 
   return (
     <div className="space-y-6">
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-xl flex items-center justify-between">
+          <span>{error}</span>
+          <button onClick={() => fetchTrainers()} className="px-3 py-1 bg-red-100 hover:bg-red-200 rounded-lg text-sm font-medium">Retry</button>
+        </div>
+      )}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold text-[#4D2B8C]">
@@ -64,7 +103,14 @@ export const TrainersView = ({
         </div>
 
         <div className="flex gap-2">
-          {/* Capacity Filter */}
+          <button
+            onClick={() => fetchTrainers()}
+            className="flex items-center gap-2 px-3 py-2 border border-[#4D2B8C]/20 rounded-xl text-[#4D2B8C] hover:bg-[#4D2B8C]/5"
+            title="Refresh"
+          >
+            <RefreshCw size={16} className={loading ? "animate-spin" : ""} />
+            Refresh
+          </button>
           <div className="bg-white px-3 py-2 rounded-xl border border-[#4D2B8C]/10 flex items-center gap-2 text-[#4D2B8C] shadow-sm">
             <Activity size={16} />
             <select
@@ -77,12 +123,17 @@ export const TrainersView = ({
               <option value="Fully Booked">Fully Booked</option>
             </select>
           </div>
-
+          {/* Add Trainer: backend uses trainer approvals (GET /api/v1/admin/trainers/approvals); no direct create API */}
           <button className="bg-[#4D2B8C] text-white px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-[#F39EB6] transition shadow-lg shadow-[#4D2B8C]/20">
             <Plus size={16} /> Add Trainer
           </button>
         </div>
       </div>
+      {loading && trainers.length === 0 && (
+        <div className="flex items-center justify-center min-h-[120px] text-[#4D2B8C]">
+          <RefreshCw size={24} className="animate-spin" /> Loading trainers…
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredTrainers.map((t) => {

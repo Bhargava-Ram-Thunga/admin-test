@@ -1,3 +1,4 @@
+/** Finance: Payment-service exists under /api/v1/payments but no admin list/transactions API was mapped. UI uses mock data. */
 import { Card } from "../components/ui/Card";
 import type { Student, User } from "../types";
 

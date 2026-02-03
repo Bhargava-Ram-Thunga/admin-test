@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
     Search,
     Filter,
@@ -12,17 +12,41 @@ import {
     Settings,
     RotateCcw
 } from "lucide-react";
-import { MOCK_ALLOCATIONS } from "../data/mockData";
 import { CreateAllocationModal } from "../components/modals/CreateAllocationModal";
 import { ReallocationModal } from "../components/modals/ReallocationModal";
 import { AutoAssignmentConfigModal } from "../components/modals/AutoAssignmentConfigModal";
 import type { Allocation } from "../types";
+import { api, getData, postData, putData, ADMIN_API } from "../api/client";
+import type { AllocationApiRow } from "../api/types";
 
-interface AllocationsViewProps {
-    user: any;
+function mapAllocationRow(row: AllocationApiRow): Allocation {
+    const status = row.status ? row.status.charAt(0).toUpperCase() + row.status.slice(1).toLowerCase() : "Pending";
+    const meta = row.metadata || {};
+    return {
+        id: row.id,
+        studentId: row.studentId,
+        studentName: row.student?.fullName ?? row.studentId,
+        trainerId: row.trainerId ?? null,
+        trainerName: row.trainer?.fullName ?? null,
+        courseId: row.courseId ?? "",
+        courseName: row.course?.title ?? (row.courseId ? "—" : "—"),
+        status: status as Allocation["status"],
+        requestedDate: row.requestedAt ? new Date(row.requestedAt).toLocaleDateString() : "",
+        allocatedDate: row.allocatedAt ? new Date(row.allocatedAt).toLocaleDateString() : undefined,
+        allocatedBy: row.allocatedBy ?? undefined,
+        sessionCount: typeof row.sessionCount === "number" ? row.sessionCount : 0,
+        scheduleMode: (row.scheduleType?.toLowerCase().includes("sunday") ? "SUNDAY_ONLY" : "WEEKDAY_DAILY") as Allocation["scheduleMode"],
+        timeSlot: (meta.timeSlot as string) ?? "—",
+        startDate: (meta.startDate as string) ?? (row.requestedAt ? new Date(row.requestedAt).toISOString().slice(0, 10) : "—"),
+        notes: row.notes ?? undefined,
+    };
 }
 
-export const AllocationsView = ({ user: _user }: AllocationsViewProps) => {
+interface AllocationsViewProps {
+    user: { id?: string };
+}
+
+export const AllocationsView = ({ user }: AllocationsViewProps) => {
     const [activeTab, setActiveTab] = useState<"all" | "pending" | "auto" | "history">("all");
     const [selectedAllocation, setSelectedAllocation] = useState<Allocation | null>(null);
     const [isDetailOpen, setIsDetailOpen] = useState(false);
@@ -30,15 +54,32 @@ export const AllocationsView = ({ user: _user }: AllocationsViewProps) => {
     const [isReallocateModalOpen, setIsReallocateModalOpen] = useState(false);
     const [isAutoConfigModalOpen, setIsAutoConfigModalOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
+    const [allocations, setAllocations] = useState<Allocation[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
-    // Mock local state to allow UI updates
-    const [allocations, setAllocations] = useState<Allocation[]>(MOCK_ALLOCATIONS as unknown as Allocation[]);
+    const fetchAllocations = useCallback(async () => {
+        setLoading(true);
+        setError(null);
+        const params = new URLSearchParams();
+        params.set("limit", "200");
+        if (activeTab === "pending") params.set("status", "pending");
+        const q = params.toString();
+        const path = `${ADMIN_API}/allocations${q ? `?${q}` : ""}`;
+        const data = await getData<AllocationApiRow[]>(path).catch((e) => {
+            setError(e instanceof Error ? e.message : "Failed to load allocations");
+            return [];
+        });
+        setAllocations(Array.isArray(data) ? data.map(mapAllocationRow) : []);
+        setLoading(false);
+    }, [activeTab]);
 
-    // Simple filter logic
+    useEffect(() => {
+        fetchAllocations();
+    }, [fetchAllocations]);
+
     const filteredAllocations = allocations.filter(item => {
         if (activeTab === "pending" && item.status !== "Pending") return false;
-        // In a real app, 'auto' and 'history' would filter by specific fields. 
-        // For now, we simulate 'Auto' showing items allocated by System.
         if (activeTab === "auto" && item.allocatedBy !== "System") return false;
 
         const matchesSearch =
@@ -60,74 +101,49 @@ export const AllocationsView = ({ user: _user }: AllocationsViewProps) => {
         }
     };
 
-    // MOCK HANDLERS
-    const handleCreateAllocation = (data: any) => {
-        console.log("Creating allocation:", data);
-        // TODO: Enable API integration when backend is connected
-        /*
-        api.post('/allocations', data).then(res => {
-            setAllocations([res.data, ...allocations]);
-        });
-        */
-
-        // Mock UI update
-        const newAllocation: Allocation = {
-            id: `AL-${Date.now()}`,
+    const handleCreateAllocation = async (data: { studentId: string; trainerId?: string | null; courseId?: string | null; notes?: string; scheduleMode?: string; timeSlot?: string; startDate?: string }) => {
+        const adminId = user?.id;
+        if (!adminId) {
+            setError("Session missing admin ID. Please sign in again.");
+            return;
+        }
+        const created = await postData<AllocationApiRow>(`${ADMIN_API}/allocations`, {
             studentId: data.studentId,
-            studentName: data.studentId === 'S001' ? 'Rahul Sharma' : 'New Student',
-            trainerId: data.trainerId || null,
-            trainerName: data.trainerId === 'T001' ? 'Vikram Malhotra' : null,
-            courseId: data.courseId,
-            courseName: 'Mathematics 101',
-            status: 'Pending',
-            requestedDate: new Date().toLocaleDateString(),
-            sessionCount: 20,
-            scheduleMode: data.scheduleMode,
-            timeSlot: data.timeSlot,
-            startDate: data.startDate
-        };
-        setAllocations([newAllocation, ...allocations]);
+            trainerId: data.trainerId ?? null,
+            courseId: data.courseId ?? null,
+            requestedBy: adminId,
+            notes: data.notes ?? null,
+        });
+        setAllocations((prev) => [mapAllocationRow(created), ...prev]);
+        setIsCreateModalOpen(false);
     };
 
-    const handleReallocate = (data: any) => {
-        console.log("Reallocating:", data);
-        // TODO: Enable API integration when backend is connected
-        /*
-        api.post(`/allocations/${data.allocationId}/reallocate`, data);
-        */
-
-        // Mock UI update
-        const updated = allocations.map(a =>
-            a.id === data.allocationId
-                ? { ...a, trainerId: data.newTrainerId, trainerName: 'New Trainer (Mock)', notes: `Reallocated: ${data.reason}` }
-                : a
-        );
-        setAllocations(updated);
-
-        // Also update selected allocation if open
-        if (selectedAllocation?.id === data.allocationId) {
-            setSelectedAllocation(prev => prev ? { ...prev, trainerId: data.newTrainerId, trainerName: 'New Trainer (Mock)' } : null);
-        }
+    const handleReallocate = async (data: { allocationId: string; newTrainerId: string; reason: string }) => {
+        await putData<AllocationApiRow>(`${ADMIN_API}/allocations/${data.allocationId}`, {
+            trainerId: data.newTrainerId,
+            notes: data.reason,
+        });
+        await fetchAllocations();
+        setIsReallocateModalOpen(false);
+        if (selectedAllocation?.id === data.allocationId) setSelectedAllocation(null);
     };
 
-    const handleStatusChange = (id: string, newStatus: any) => {
-        console.log(`Changing status of ${id} to ${newStatus}`);
-        // TODO: Enable API integration when backend is connected
-        /*
-        api.patch(`/allocations/${id}/status`, { status: newStatus });
-        */
-
-        const updated = allocations.map(a => a.id === id ? { ...a, status: newStatus } : a);
-        setAllocations(updated);
-        if (selectedAllocation?.id === id) {
-            setSelectedAllocation(prev => prev ? { ...prev, status: newStatus } : null);
-        }
+    const handleStatusChange = async (id: string, newStatus: string) => {
+        if (newStatus === "Approved") await postData(`${ADMIN_API}/allocations/${id}/approve`, {});
+        else if (newStatus === "Rejected") await postData(`${ADMIN_API}/allocations/${id}/reject`, { rejectionReason: "Rejected by admin" });
+        await fetchAllocations();
+        if (selectedAllocation?.id === id) setSelectedAllocation((prev) => (prev ? { ...prev, status: newStatus as Allocation["status"] } : null));
     };
 
-    const handleRetryAutoAssign = (id: string) => {
-        console.log(`Retrying auto-assign for ${id}`);
-        // TODO: Enable API integration when backend is connected
-        alert("System is retrying assignment based on proximity and subject match...");
+    const handleCancelAllocation = async (id: string) => {
+        await postData(`${ADMIN_API}/allocations/${id}/cancel`, {});
+        await fetchAllocations();
+        if (selectedAllocation?.id === id) setIsDetailOpen(false);
+    };
+
+    const handleRetryAutoAssign = async (allocation: Allocation) => {
+        await postData(`${ADMIN_API}/allocations/retry-auto-assign`, { studentId: allocation.studentId, courseId: allocation.courseId }).catch(() => {});
+        await fetchAllocations();
     };
 
     const AllocationDetail = ({ allocation, onClose }: { allocation: Allocation; onClose: () => void }) => (
@@ -255,7 +271,7 @@ export const AllocationsView = ({ user: _user }: AllocationsViewProps) => {
                         )}
                         {allocation.status !== 'Cancelled' && allocation.status !== 'Rejected' && (
                             <button
-                                onClick={() => handleStatusChange(allocation.id, 'Cancelled')}
+                                onClick={() => handleCancelAllocation(allocation.id)}
                                 className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 font-medium"
                             >
                                 Cancel Allocation
@@ -268,14 +284,39 @@ export const AllocationsView = ({ user: _user }: AllocationsViewProps) => {
         </div>
     );
 
+    if (loading && allocations.length === 0) {
+        return (
+            <div className="flex items-center justify-center min-h-[200px]">
+                <div className="text-gray-500 flex items-center gap-2">
+                    <RefreshCw size={24} className="animate-spin" />
+                    Loading allocations…
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="space-y-6">
+            {error && (
+                <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-xl flex items-center justify-between">
+                    <span>{error}</span>
+                    <button onClick={() => fetchAllocations()} className="px-3 py-1 bg-red-100 hover:bg-red-200 rounded-lg text-sm font-medium">Retry</button>
+                </div>
+            )}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-2xl font-bold text-gray-800">Allocation Management</h1>
                     <p className="text-gray-500">Manage trainer-student allocations</p>
                 </div>
                 <div className="flex gap-2">
+                    <button
+                        onClick={() => fetchAllocations()}
+                        className="flex items-center gap-2 px-4 py-2 border border-gray-200 text-gray-600 rounded-lg hover:bg-gray-50 transition-colors"
+                        title="Refresh"
+                    >
+                        <RefreshCw size={20} className={loading ? "animate-spin" : ""} />
+                        Refresh
+                    </button>
                     {activeTab === 'auto' && (
                         <button
                             onClick={() => setIsAutoConfigModalOpen(true)}
@@ -382,7 +423,7 @@ export const AllocationsView = ({ user: _user }: AllocationsViewProps) => {
                                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                         {activeTab === 'auto' && allocation.status === 'Pending' ? (
                                             <button
-                                                onClick={(e) => { e.stopPropagation(); handleRetryAutoAssign(allocation.id); }}
+                                                onClick={(e) => { e.stopPropagation(); handleRetryAutoAssign(allocation); }}
                                                 className="p-2 text-[#4D2B8C] hover:bg-[#4D2B8C]/10 rounded-full"
                                                 title="Retry Auto-Assign"
                                             >

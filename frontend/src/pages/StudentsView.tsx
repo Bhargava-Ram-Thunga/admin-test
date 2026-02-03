@@ -1,11 +1,31 @@
-import { useState, useMemo } from "react";
-import { UserCheck, Search, Plus, X, Edit2, Trash2 } from "lucide-react";
+import { useState, useMemo, useEffect, useCallback } from "react";
+import { UserCheck, Search, Plus, X, Edit2, Trash2, RefreshCw } from "lucide-react";
 import { Modal } from "../components/ui/Modal";
 import { Card } from "../components/ui/Card";
 import { Badge } from "../components/ui/Badge";
 import { checkPermission } from "../utils/helpers";
 import { Save } from "lucide-react";
 import type { Student, Trainer, User } from "../types";
+import { getData } from "../api/client";
+import type { StudentApiRow } from "../api/types";
+
+function mapStudentRow(row: StudentApiRow): Student {
+  return {
+    id: row.studentId,
+    name: row.fullName ?? row.studentId,
+    email: row.email ?? "",
+    regionId: "",
+    regionName: "",
+    course: "",
+    status: "Active",
+    paymentStatus: "Pending",
+    amount: "",
+    enrollmentDate: row.createdAt?.slice(0, 10) ?? "",
+    avatarUrl: row.avatarUrl ?? `https://i.pravatar.cc/150?u=${row.studentId}`,
+    mentorId: null,
+    mentorName: null,
+  };
+}
 
 interface StudentsViewProps {
   user: User;
@@ -21,20 +41,41 @@ interface StudentsViewProps {
 
 export const StudentsView = ({
   user,
-  students,
-  setStudents,
+  students: _studentsProp,
+  setStudents: _setStudents,
   trainers,
   setTrainers,
   addToast,
 }: StudentsViewProps) => {
+  const [students, setStudentsLocal] = useState<Student[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [assignmentFilter, setAssignmentFilter] = useState("All"); // "All" | "Assigned" | "Unassigned"
+  const [assignmentFilter, setAssignmentFilter] = useState("All");
+
+  const fetchStudents = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    const params = new URLSearchParams();
+    params.set("limit", "100");
+    if (searchTerm) params.set("search", searchTerm);
+    const q = params.toString();
+    const path = `/api/v1/students${q ? `?${q}` : ""}`;
+    const res = await getData<{ data: StudentApiRow[]; total: number; page: number; limit: number }>(path).catch((e) => {
+      setError(e instanceof Error ? e.message : "Failed to load students");
+      return { data: [], total: 0, page: 1, limit: 100 };
+    });
+    setStudentsLocal(Array.isArray(res?.data) ? res.data.map(mapStudentRow) : []);
+    setLoading(false);
+  }, [searchTerm]);
+
+  useEffect(() => {
+    fetchStudents();
+  }, [fetchStudents]);
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
-
-  // Editing / Assigning State
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
   const [selectedStudentForAssignment, setSelectedStudentForAssignment] =
     useState<Student | null>(null);
@@ -52,26 +93,18 @@ export const StudentsView = ({
     mentorName: null,
   });
 
-  // --- FILTERS ---
   const filteredStudents = useMemo(() => {
-    let result = students.filter((s) => checkPermission(user, s.regionId));
-
-    // Search
+    let result = students.filter((s) => !user.regionId || user.regionId === "ALL" || checkPermission(user, s.regionId));
     if (searchTerm) {
       result = result.filter(
         (s) =>
           s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          s.course.toLowerCase().includes(searchTerm.toLowerCase())
+          (s.course && s.course.toLowerCase().includes(searchTerm.toLowerCase())) ||
+          (s.email && s.email.toLowerCase().includes(searchTerm.toLowerCase()))
       );
     }
-
-    // Assignment Filter
-    if (assignmentFilter === "Assigned") {
-      result = result.filter((s) => s.mentorId);
-    } else if (assignmentFilter === "Unassigned") {
-      result = result.filter((s) => !s.mentorId);
-    }
-
+    if (assignmentFilter === "Assigned") result = result.filter((s) => s.mentorId);
+    else if (assignmentFilter === "Unassigned") result = result.filter((s) => !s.mentorId);
     return result;
   }, [students, user, searchTerm, assignmentFilter]);
 
@@ -100,13 +133,14 @@ export const StudentsView = ({
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
     if (editingStudent) {
-      setStudents((prev) =>
+      setStudentsLocal((prev) =>
         prev.map((s) =>
           s.id === editingStudent.id ? ({ ...s, ...formData } as Student) : s
         )
       );
       addToast("Student details updated successfully", "success");
     } else {
+      // No backend API for creating student — local UI only
       const newStudent = {
         ...formData,
         id: Date.now().toString(),
@@ -116,18 +150,18 @@ export const StudentsView = ({
         mentorId: null,
         mentorName: null,
       } as Student;
-      setStudents((prev) => [newStudent, ...prev]);
-      addToast("New student enrolled successfully", "success");
+      setStudentsLocal((prev) => [newStudent, ...prev]);
+      addToast("New student enrolled (local only — no backend API)", "neutral");
     }
     setIsModalOpen(false);
   };
 
   const handleDelete = (id: string) => {
     if (
-      window.confirm("Are you sure you want to delete this student record?")
+      window.confirm("Are you sure you want to remove this student from the list? (No backend delete API)")
     ) {
-      setStudents((prev) => prev.filter((s) => s.id !== id));
-      addToast("Student record deleted", "warning");
+      setStudentsLocal((prev) => prev.filter((s) => s.id !== id));
+      addToast("Student removed from list", "warning");
     }
   };
 
@@ -141,44 +175,31 @@ export const StudentsView = ({
 
   const handleAssignMentor = () => {
     if (!selectedMentorId || !selectedStudentForAssignment) return;
-
     const mentor = trainers.find((t) => t.id === selectedMentorId);
     if (!mentor) return;
-
-    // 1. Update Student
-    setStudents((prev) =>
+    setStudentsLocal((prev) =>
       prev.map((s) =>
         s.id === selectedStudentForAssignment.id
           ? { ...s, mentorId: mentor.id, mentorName: mentor.name }
           : s
       )
     );
-
-    // 2. Update Trainer Count
     setTrainers((prev) =>
       prev.map((t) =>
         t.id === mentor.id ? { ...t, students: t.students + 1 } : t
       )
     );
-
-    addToast(
-      `Assigned ${selectedStudentForAssignment.name} to ${mentor.name}`,
-      "success"
-    );
+    addToast(`Assigned ${selectedStudentForAssignment.name} to ${mentor.name}`, "success");
     setIsAssignModalOpen(false);
   };
 
   const handleUnassignMentor = (student: Student) => {
     if (!student.mentorId) return;
-
-    // 1. Update Student
-    setStudents((prev) =>
+    setStudentsLocal((prev) =>
       prev.map((s) =>
         s.id === student.id ? { ...s, mentorId: null, mentorName: null } : s
       )
     );
-
-    // 2. Update Trainer Count (Decrement)
     setTrainers((prev) =>
       prev.map((t) =>
         t.id === student.mentorId
@@ -186,7 +207,6 @@ export const StudentsView = ({
           : t
       )
     );
-
     addToast(`Unassigned mentor from ${student.name}`, "neutral");
   };
 
@@ -204,7 +224,12 @@ export const StudentsView = ({
 
   return (
     <div className="space-y-6">
-      {/* Header Controls */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-xl flex items-center justify-between">
+          <span>{error}</span>
+          <button onClick={() => fetchStudents()} className="px-3 py-1 bg-red-100 hover:bg-red-200 rounded-lg text-sm font-medium">Retry</button>
+        </div>
+      )}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold text-[#4D2B8C]">
@@ -215,7 +240,14 @@ export const StudentsView = ({
           </p>
         </div>
         <div className="flex gap-2 w-full sm:w-auto flex-wrap">
-          {/* Assignment Filter */}
+          <button
+            onClick={() => fetchStudents()}
+            className="flex items-center gap-2 px-3 py-2 border border-[#4D2B8C]/20 rounded-xl text-[#4D2B8C] hover:bg-[#4D2B8C]/5"
+            title="Refresh"
+          >
+            <RefreshCw size={16} className={loading ? "animate-spin" : ""} />
+            Refresh
+          </button>
           <div className="bg-white px-3 py-2 rounded-xl border border-[#4D2B8C]/10 flex items-center gap-2 text-[#4D2B8C] shadow-sm">
             <UserCheck size={16} />
             <select
@@ -228,27 +260,31 @@ export const StudentsView = ({
               <option value="Unassigned">Unassigned</option>
             </select>
           </div>
-
-          {/* Search */}
           <div className="bg-white px-4 py-2 rounded-xl border border-[#4D2B8C]/10 flex items-center gap-2 text-[#4D2B8C] shadow-sm flex-1 sm:flex-none">
             <Search size={16} />
             <input
               placeholder="Search..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && fetchStudents()}
               className="bg-transparent outline-none text-sm w-full sm:w-32 text-[#4D2B8C] placeholder-[#4D2B8C]/50"
             />
           </div>
-
+          {/* Add Student: no backend create API — local-only placeholder */}
           <button
             onClick={() => handleOpenModal()}
             className="bg-[#4D2B8C] text-white p-2 px-4 rounded-xl hover:bg-[#F39EB6] transition shadow-lg shadow-[#4D2B8C]/20 font-bold text-sm flex items-center gap-2 whitespace-nowrap"
           >
             <Plus size={18} />
-            <span className="hidden sm:inline">Add Student</span>
+            <span className="hidden sm:inline">Add Student (local)</span>
           </button>
         </div>
       </div>
+      {loading && students.length === 0 && (
+        <div className="flex items-center justify-center min-h-[120px] text-[#4D2B8C]">
+          <RefreshCw size={24} className="animate-spin" /> Loading students…
+        </div>
+      )}
 
       {/* --- ASSIGN MENTOR MODAL --- */}
       <Modal

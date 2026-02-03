@@ -1,3 +1,4 @@
+/** Dashboard: No dedicated backend API. Backend has no GET /dashboard. Data shown is from mock or from other views (students passed from App). */
 import { Users, DollarSign, TrendingUp } from "lucide-react";
 import {
   AreaChart,

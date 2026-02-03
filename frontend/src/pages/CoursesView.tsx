@@ -1,3 +1,4 @@
+/** Courses: Course-service exists under /api/v1/courses but no admin catalog list API was mapped here. UI uses mock catalog. */
 import { Plus, BookOpen } from "lucide-react";
 import { Card } from "../components/ui/Card";
 import type { User } from "../types";
