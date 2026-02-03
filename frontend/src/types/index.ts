@@ -1,6 +1,7 @@
 import type { LucideIcon } from "lucide-react";
 
 export interface User {
+  id?: string; // Admin ID from backend (for API calls that require requestedBy, etc.)
   email: string;
   name: string;
   role: string;

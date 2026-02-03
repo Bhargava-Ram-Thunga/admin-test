@@ -1,3 +1,4 @@
+/** Regions: Backend has GET /api/v1/admin/states and GET /api/v1/admin/cities?state= only. No hierarchy (state→district→division→constituency→mandal). This view uses mock hierarchy. */
 import { useState, useMemo } from "react";
 import { Plus, Filter, Lock, Layers, MapPin, ChevronDown } from "lucide-react";
 import { Card } from "../components/ui/Card";

@@ -1,3 +1,4 @@
+/** Analytics: Backend has GET /api/v1/admin/demand/analytics and analytics-service metrics; not wired here. UI uses mock charts. */
 import { useState } from "react";
 import { Plus } from "lucide-react";
 import AnalyticsCard from "../components/dashboard/AnalyticsCard";
