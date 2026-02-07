@@ -34,6 +34,22 @@ export const getAccessToken = (): string | null => {
   }
 };
 
+export const getRefreshToken = (): string | null => {
+  const tokensStr = localStorage.getItem(TOKENS_KEY);
+  if (!tokensStr) return null;
+  try {
+    const tokens = JSON.parse(tokensStr) as StoredTokens;
+    return tokens.refreshToken ?? null;
+  } catch {
+    return null;
+  }
+};
+
+/** Update stored tokens only (e.g. after refresh). Does not modify user session. */
+export const setTokens = (tokens: StoredTokens): void => {
+  localStorage.setItem(TOKENS_KEY, JSON.stringify(tokens));
+};
+
 export const clearSession = () => {
   localStorage.removeItem(SESSION_KEY);
   localStorage.removeItem(TOKENS_KEY);

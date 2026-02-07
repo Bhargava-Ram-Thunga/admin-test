@@ -14,22 +14,54 @@ import {
   Menu,
   Share2,
   Calendar,
+  FileText,
+  Search,
 } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import type { User } from "../../types";
-import logo from "../../assets/logo.png";
+import { canAccessRoute, canAccessRouteByPermission, type RouteId } from "../../constants/roles";
 
 interface SidebarProps {
   user: User;
 }
 
+const MAIN_ITEMS: { id: RouteId; label: string; icon: typeof LayoutGrid }[] = [
+  { id: "dashboard", label: "Dashboard", icon: LayoutGrid },
+  { id: "students", label: "Students", icon: Users },
+  { id: "trainers", label: "Teachers", icon: GraduationCap },
+  { id: "analytics", label: "Analytics", icon: BarChart2 },
+];
+const MANAGEMENT_ITEMS: { id: RouteId; label: string; icon: typeof MapPin }[] = [
+  { id: "regions", label: "Regions", icon: MapPin },
+  { id: "allocations", label: "Allocations", icon: Share2 },
+  { id: "sessions", label: "Classes", icon: Calendar },
+  { id: "finance", label: "Fees Collection", icon: DollarSign },
+  { id: "safety", label: "Safety", icon: ShieldAlert },
+  { id: "courses", label: "Content", icon: BookOpen },
+  { id: "audit", label: "Audit log", icon: FileText },
+];
+
 export const Sidebar = ({ user }: SidebarProps) => {
-  const [isExpanded, setIsExpanded] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const roleCodes = user.roles?.map((r) => r.code) ?? [];
+  const permissions = user.permissions ?? [];
+  const showByPermission = permissions.length > 0;
+  const show = (routeId: RouteId) =>
+    showByPermission
+      ? canAccessRouteByPermission(permissions, routeId)
+      : (roleCodes.length === 0 ? true : canAccessRoute(roleCodes, routeId));
 
-  const NavItem = ({ icon: Icon, label, id }: any) => {
+  const NavItem = ({
+    icon: Icon,
+    label,
+    id,
+  }: {
+    icon: typeof LayoutGrid;
+    label: string;
+    id: string;
+  }) => {
     const isActive = location.pathname.includes(id);
 
     return (
@@ -38,105 +70,83 @@ export const Sidebar = ({ user }: SidebarProps) => {
           navigate(`/${id}`);
           setMobileOpen(false);
         }}
-        className={`flex items-center h-12 mb-1 transition-all duration-300 ease-in-out rounded-xl cursor-pointer 
-          ${isExpanded ? "w-full gap-3 ml-0 pl-3" : "w-12 gap-0 ml-1 pl-2"}
+        className={`flex items-center w-full gap-3 h-11 mb-1 transition-colors rounded-lg cursor-pointer pl-3
           ${isActive
-            ? "bg-[#F39EB6] text-white shadow-sm font-semibold"
-            : "text-white/80 hover:bg-[#F39EB6]/20 hover:text-white"
-          } `}
+            ? "bg-[#EDE7F6] text-[#5E35B1] font-semibold"
+            : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+          }`}
       >
-        <div className="flex items-center justify-center w-8 h-8 transition-all duration-300 ease-in-out shrink-0">
-          <Icon size={20} />
-        </div>
-        <span
-          className={`text-sm whitespace-nowrap overflow-hidden transition-all duration-300 ease-in-out ${isExpanded ? "max-w-40 opacity-100 ml-0" : "max-w-0 opacity-0 ml-0"
-            }`}
-        >
-          {label}
-        </span>
+        <Icon size={20} className="shrink-0 text-current" />
+        <span className="text-sm whitespace-nowrap">{label}</span>
       </button>
     );
   };
 
-  const SectionLabel = ({ label }: { label: string }) => (
-    <p
-      className={`text-xs font-bold text-white/50 uppercase mb-3 tracking-wider whitespace-nowrap overflow-hidden transition-all duration-300 ease-in-out 
-        ${isExpanded ? "max-w-40 opacity-100 pl-6" : "max-w-0 opacity-0 pl-0"}
-      `}
-    >
-      {label}
-    </p>
-  );
-
-
   return (
     <>
-      {/* Mobile Toggle */}
       <div className="fixed top-4 left-4 z-50 lg:hidden">
         <button
           onClick={() => setMobileOpen(!mobileOpen)}
-          className="p-2 bg-[#4D2B8C] text-white rounded-lg shadow-lg"
+          className="p-2 bg-white border border-slate-200 text-slate-700 rounded-lg shadow-sm hover:bg-slate-50"
         >
           {mobileOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
       </div>
 
-      {/* Backdrop for mobile */}
       {mobileOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          className="fixed inset-0 bg-black/40 z-40 lg:hidden"
           onClick={() => setMobileOpen(false)}
-        ></div>
+          aria-hidden
+        />
       )}
 
-      <div
-        onMouseEnter={() => setIsExpanded(true)}
-        onMouseLeave={() => setIsExpanded(false)}
-        className={`fixed left-0 top-0 h-screen bg-[#4D2B8C] text-white z-50 flex flex-col overflow-hidden transition-all duration-300 ease-in-out shadow-2xl 
-                ${mobileOpen
-            ? "translate-x-0 w-64"
-            : "-translate-x-full lg:translate-x-0"
-          } 
-                ${isExpanded ? "lg:w-64" : "lg:w-20"}`}
+      <aside
+        className={`fixed left-0 top-0 h-screen w-64 bg-white border-r border-slate-200 flex flex-col z-50 shadow-sm
+          transition-transform duration-200 ease-out
+          ${mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
+        `}
       >
+        {/* Kodingcaravan brand */}
+        <div className="p-5 flex items-center gap-2 shrink-0 border-b border-slate-100">
+          <div className="w-9 h-9 rounded-lg bg-[#5E35B1] flex items-center justify-center shrink-0">
+            <span className="text-white font-bold text-sm">K</span>
+          </div>
+          <span className="font-bold text-xl text-slate-800 tracking-tight">Kodingcaravan</span>
+        </div>
 
-        <div className="p-6 flex items-center gap-3 transition-all duration-300 ease-in-out pl-6 shrink-0">
-          <img
-            src={logo}
-            alt="Logo"
-            className="w-8 h-8 rounded-lg flex-shrink-0 shadow-lg shadow-black/20"
-          />
-          <span
-            className={`font-bold text-xl tracking-tight text-white whitespace-nowrap overflow-hidden transition-all duration-300 ease-in-out ${isExpanded ? "max-w-40 opacity-100" : "max-w-0 opacity-0"
-              }`}
-          >
-            KodingC.
-          </span>
-        </div>
-        <div className="flex-1 overflow-y-auto overflow-x-hidden px-3 space-y-6 mt-6 sidebar-scrollbar min-h-0">
-          <div>
-            <SectionLabel label="Main Menu" />
-            <NavItem icon={LayoutGrid} label="Dashboard" id="dashboard" />
-            <NavItem icon={Users} label="Students" id="students" />
-            <NavItem icon={GraduationCap} label="Trainers" id="trainers" />
-            <NavItem icon={BarChart2} label="Analytics" id="analytics" />
-          </div>
-          <div>
-            <SectionLabel label="Management" />
-            <NavItem icon={MapPin} label="Regions" id="regions" />
-            <NavItem icon={Share2} label="Allocations" id="allocations" />
-            <NavItem icon={Calendar} label="Sessions" id="sessions" />
-            <NavItem icon={DollarSign} label="Finance" id="finance" />
-            <NavItem icon={ShieldAlert} label="Safety" id="safety" />
-            <NavItem icon={BookOpen} label="Content" id="courses" />
+        {/* Search */}
+        <div className="p-3 shrink-0">
+          <div className="flex items-center gap-2 h-10 px-3 rounded-lg bg-slate-100 border border-slate-200 focus-within:ring-2 focus-within:ring-[#5E35B1]/20 focus-within:border-[#5E35B1]/40">
+            <Search size={18} className="text-slate-400 shrink-0" />
+            <input
+              type="search"
+              placeholder="Search..."
+              className="flex-1 min-w-0 bg-transparent text-sm text-slate-700 placeholder:text-slate-400 outline-none"
+            />
           </div>
         </div>
-        <div className="p-3 space-y-1 bg-black/10 shrink-0 pb-6">
-          <NavItem icon={Settings} label="Settings" id="settings" />
+
+        {/* Nav */}
+        <nav className="flex-1 overflow-y-auto overflow-x-hidden px-3 py-2 space-y-5 sidebar-scrollbar min-h-0">
+          <div>
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 px-3">Main</p>
+            {MAIN_ITEMS.filter((item) => show(item.id)).map((item) => (
+              <NavItem key={item.id} icon={item.icon} label={item.label} id={item.id} />
+            ))}
+          </div>
+          <div>
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 px-3">Management</p>
+            {MANAGEMENT_ITEMS.filter((item) => show(item.id)).map((item) => (
+              <NavItem key={item.id} icon={item.icon} label={item.label} id={item.id} />
+            ))}
+          </div>
+        </nav>
+
+        <div className="p-3 border-t border-slate-100 space-y-1 shrink-0">
+          {show("settings") && <NavItem icon={Settings} label="Settings" id="settings" />}
           <button
-            className={`flex items-center h-12 text-white/80 hover:text-white hover:bg-white/10 rounded-xl transition-all duration-300 ease-in-out text-sm
-              ${isExpanded ? "w-full gap-3 ml-0 pl-3" : "w-12 gap-0 ml-1 pl-2"}
-            `}
+            className="flex items-center w-full gap-3 h-11 rounded-lg pl-3 text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors"
             onClick={() => {
               import("../../utils/auth").then(({ clearSession }) => {
                 clearSession();
@@ -144,18 +154,11 @@ export const Sidebar = ({ user }: SidebarProps) => {
               });
             }}
           >
-            <div className="flex items-center justify-center w-8 h-8 transition-all duration-300 ease-in-out shrink-0">
-              <LogOut size={20} />
-            </div>
-            <span
-              className={`whitespace-nowrap overflow-hidden transition-all duration-300 ease-in-out ${isExpanded ? "max-w-40 opacity-100" : "max-w-0 opacity-0"
-                }`}
-            >
-              Log Out
-            </span>
+            <LogOut size={20} className="shrink-0" />
+            <span className="text-sm">Log Out</span>
           </button>
         </div>
-      </div>
+      </aside>
     </>
   );
 };

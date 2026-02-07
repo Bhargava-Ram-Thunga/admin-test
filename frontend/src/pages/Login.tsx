@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Eye, EyeOff, ArrowRight } from "lucide-react";
 import { THEME } from "../constants/theme";
-import { INITIAL_USERS } from "../data/mockData";
+import { primaryRoleDisplayName } from "../constants/roles";
 import { setSession } from "../utils/auth";
 import { useNavigate } from "react-router-dom";
 import type { User } from "../types";
@@ -36,24 +36,40 @@ export const Login = () => {
     }
     setLoading(true);
     try {
+      type AdminRes = {
+        id: string;
+        email: string;
+        fullName: string | null;
+        adminType?: "company" | "franchise";
+        state?: string | null;
+        district?: string | null;
+        zone?: string | null;
+        locality?: string | null;
+        roles?: { code: string; name?: string }[];
+        permissions?: string[];
+      };
       const res = await api.post<{
         success: boolean;
-        data?: {
-          admin: { id: string; email: string; fullName: string | null; roles?: { code: string; name?: string }[] };
-          tokens: { accessToken: string; refreshToken: string };
-        };
+        data?: { admin: AdminRes; tokens: { accessToken: string; refreshToken: string } };
       }>(`${ADMIN_API}/auth/login`, { email: email.trim(), password });
-      const data = res as { success?: boolean; data?: { admin: { id: string; email: string; fullName: string | null; roles?: { code: string; name?: string }[] }; tokens: { accessToken: string; refreshToken: string } } };
+      const data = res as { success?: boolean; data?: { admin: AdminRes; tokens: { accessToken: string; refreshToken: string } } };
       if (data.success && data.data?.admin && data.data?.tokens) {
         const admin = data.data.admin;
-        const roleName = admin.roles?.[0]?.name ?? admin.roles?.[0]?.code ?? "Admin";
+        const roleCodes = admin.roles?.map((r) => r.code) ?? [];
         const user: User = {
           id: admin.id,
           email: admin.email,
           name: admin.fullName ?? admin.email,
-          role: roleName,
-          regionId: "ALL",
+          role: primaryRoleDisplayName(roleCodes),
+          regionId: admin.state ?? "ALL",
           avatarUrl: `https://i.pravatar.cc/150?u=${admin.email}`,
+          roles: admin.roles,
+          permissions: admin.permissions,
+          adminType: admin.adminType,
+          state: admin.state,
+          district: admin.district,
+          zone: admin.zone,
+          locality: admin.locality,
         };
         setSession(user, data.data.tokens);
         navigate("/dashboard");
@@ -76,7 +92,7 @@ export const Login = () => {
   };
 
   return (
-    <div className="min-h-screen w-full flex flex-col md:flex-row bg-[#4D2B8C] relative">
+    <div className="min-h-screen w-full flex flex-col md:flex-row bg-[#5E35B1] relative">
       {/* LEFT SIDE - IMAGE/GRADIENT */}
       <div className="md:w-1/2 relative hidden md:flex flex-col justify-between p-12 lg:p-16 text-white overflow-hidden">
         {/* CAROUSEL BACKGROUND */}
@@ -102,22 +118,19 @@ export const Login = () => {
         ></div>
         <div className="relative z-20">
           <div className="flex items-center gap-3">
-            <img
-              src="/logo.png"
-              alt="KodingC Logo"
-              className="w-12 h-12 object-contain"
-            />
-            <span className="font-bold text-2xl tracking-wide">KodingC.</span>
+            <div className="w-10 h-10 rounded-lg bg-white/20 flex items-center justify-center">
+              <span className="font-bold text-lg text-white">K</span>
+            </div>
+            <span className="font-bold text-2xl tracking-wide">Kodingcaravan</span>
           </div>
         </div>
         <div className="relative z-20">
           <h2 className="text-5xl font-bold leading-tight mb-6">
-            Empowering <br />
-            Education Management.
+            Offline tutoring, <br />
+            managed simply.
           </h2>
           <p className="text-white/70 text-lg font-medium leading-relaxed max-w-md">
-            Streamline operations, track performance, and manage your
-            educational hierarchy efficiently with our comprehensive dashboard.
+            Kodingcaravan — edtech for offline tutoring. Manage classes, trainers, and students from one dashboard.
           </p>
         </div>
         <div className="relative z-20 flex gap-3">
@@ -134,7 +147,7 @@ export const Login = () => {
       </div>
 
       {/* RIGHT SIDE - LOGIN FORM */}
-      <div className="w-full md:w-1/2 p-8 md:p-12 lg:p-24 flex flex-col justify-center bg-[#4D2B8C] relative z-20">
+      <div className="w-full md:w-1/2 p-8 md:p-12 lg:p-24 flex flex-col justify-center bg-[#5E35B1] relative z-20">
         <div className="max-w-md mx-auto w-full">
           <h2 className="text-4xl font-bold text-white mb-3">Welcome back</h2>
           <p className="text-slate-400 text-base mb-10">
@@ -142,7 +155,7 @@ export const Login = () => {
           </p>
           <form onSubmit={handleLogin} className="space-y-6">
             {error && (
-              <div className="p-4 bg-[#F39EB6]/10 border border-[#F39EB6]/20 text-[#F39EB6] text-sm rounded-xl font-bold">
+              <div className="p-4 bg-red-500/10 border border-red-500/20 text-red-200 text-sm rounded-xl font-bold">
                 {error}
               </div>
             )}
@@ -154,7 +167,7 @@ export const Login = () => {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full p-4 bg-[#4D2B8C]/50 border border-[#ffffff]/20 rounded-xl outline-none focus:border-[#F39EB6] transition text-white placeholder-slate-300 text-base font-medium"
+                className="w-full p-4 bg-white/10 border border-white/20 rounded-xl outline-none focus:border-white transition text-white placeholder-slate-300 text-base font-medium"
                 placeholder="Enter your email"
               />
             </div>
@@ -167,7 +180,7 @@ export const Login = () => {
                   type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full p-4 pr-12 bg-[#4D2B8C]/50 border border-[#ffffff]/20 rounded-xl outline-none focus:border-[#F39EB6] transition text-white placeholder-slate-300 text-base font-medium"
+                  className="w-full p-4 pr-12 bg-white/10 border border-white/20 rounded-xl outline-none focus:border-white transition text-white placeholder-slate-300 text-base font-medium"
                   placeholder="Enter your password"
                 />
                 <button
@@ -188,18 +201,18 @@ export const Login = () => {
               <label className="flex items-center gap-2 text-slate-400 cursor-pointer">
                 <input
                   type="checkbox"
-                  className="rounded bg-[#4D2B8C]/50 border-[#ffffff]/20 text-[#F39EB6] focus:ring-0 w-4 h-4"
+                  className="rounded bg-white/10 border-white/20 text-[#EDE7F6] focus:ring-0 w-4 h-4"
                 />
                 <span>Remember me</span>
               </label>
-              <a href="#" className="text-[#F39EB6] hover:underline font-bold">
+              <a href="#" className="text-white hover:underline font-bold">
                 Forgot password?
               </a>
             </div>
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-4 bg-[#F39EB6] hover:bg-[#F39EB6]/90 disabled:opacity-70 text-white font-bold rounded-xl transition shadow-lg shadow-[#F39EB6]/30 flex items-center justify-center gap-2 group text-lg mt-4"
+              className="w-full py-4 bg-white text-[#5E35B1] hover:bg-white/90 disabled:opacity-70 font-bold rounded-xl transition shadow-lg flex items-center justify-center gap-2 group text-lg mt-4"
             >
               {loading ? "Signing in…" : "Sign in"}{" "}
               {!loading && (
@@ -212,22 +225,11 @@ export const Login = () => {
           </form>
           <p className="mt-10 text-center text-sm text-slate-500">
             Don't have an account?{" "}
-            <span className="text-[#F39EB6] font-bold cursor-pointer hover:underline">
+            <span className="text-white font-bold cursor-pointer hover:underline">
               Request Access
             </span>
           </p>
         </div>
-      </div>
-      <div className="absolute bottom-4 right-4 md:left-auto md:right-8 flex flex-wrap justify-end gap-2 z-30 opacity-50 hover:opacity-100 transition-opacity">
-        {INITIAL_USERS.map((u) => (
-          <button
-            key={u.email}
-            onClick={() => setEmail(u.email)}
-            className="text-[10px] bg-[#4D2B8C]/50 border border-[#ffffff]/20 hover:bg-[#F39EB6] px-3 py-1.5 rounded-lg text-white transition font-medium whitespace-nowrap"
-          >
-            {u.role}
-          </button>
-        ))}
       </div>
     </div>
   );

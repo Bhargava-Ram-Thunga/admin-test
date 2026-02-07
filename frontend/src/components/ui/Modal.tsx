@@ -16,7 +16,7 @@ export const Modal = ({ isOpen, onClose, title, children }: ModalProps) => {
                 className="absolute inset-0 bg-black/60 backdrop-blur-sm"
                 onClick={onClose}
             ></div>
-            <div className="bg-white rounded-3xl w-full max-w-lg relative z-10 shadow-2xl animate-in fade-in zoom-in duration-200">
+            <div className="bg-white rounded-3xl w-full max-w-4xl relative z-10 shadow-2xl animate-in fade-in zoom-in duration-200">
                 <div className="flex justify-between items-center p-6 border-b border-[#F5F7FA]">
                     <h3 className="text-xl font-bold text-[#393D7E]">{title}</h3>
                     <button

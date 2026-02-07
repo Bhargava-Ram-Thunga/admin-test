@@ -1,13 +1,27 @@
 import { useState } from "react";
 import { X, Save } from "lucide-react";
-import { THEME } from "../../constants/theme";
+
+export interface StudentOption { id: string; name: string }
+export interface TrainerOption { id: string; name: string }
+export interface CourseOption { id: string; title: string }
 
 interface CreateAllocationModalProps {
     onClose: () => void;
-    onSave: (data: any) => void;
+    onSave: (data: {
+        studentId: string;
+        trainerId?: string | null;
+        courseId?: string | null;
+        notes?: string;
+        scheduleMode?: string;
+        timeSlot?: string;
+        startDate?: string;
+    }) => void;
+    students?: StudentOption[];
+    trainers?: TrainerOption[];
+    courses?: CourseOption[];
 }
 
-export const CreateAllocationModal = ({ onClose, onSave }: CreateAllocationModalProps) => {
+export const CreateAllocationModal = ({ onClose, onSave, students = [], trainers = [], courses = [] }: CreateAllocationModalProps) => {
     const [formData, setFormData] = useState({
         studentId: "",
         trainerId: "",
@@ -15,12 +29,20 @@ export const CreateAllocationModal = ({ onClose, onSave }: CreateAllocationModal
         scheduleMode: "WEEKDAY_DAILY",
         startDate: "",
         timeSlot: "10:00 AM",
+        notes: "",
     });
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        // In a real app, validation would happen here
-        onSave(formData);
+        onSave({
+            studentId: formData.studentId,
+            trainerId: formData.trainerId || null,
+            courseId: formData.courseId || null,
+            notes: formData.notes || undefined,
+            scheduleMode: formData.scheduleMode,
+            timeSlot: formData.timeSlot,
+            startDate: formData.startDate || undefined,
+        });
         onClose();
     };
 
@@ -45,9 +67,10 @@ export const CreateAllocationModal = ({ onClose, onSave }: CreateAllocationModal
                                 required
                             >
                                 <option value="">Select Student</option>
-                                <option value="S001">Rahul Sharma</option>
-                                <option value="S002">Priya Patel</option>
-                                <option value="S003">Amit Singh</option>
+                                {students.map((s) => (
+                                    <option key={s.id} value={s.id}>{s.name}</option>
+                                ))}
+                                {students.length === 0 && <option value="" disabled>Loading…</option>}
                             </select>
                         </div>
                         <div className="space-y-1.5">
@@ -56,12 +79,12 @@ export const CreateAllocationModal = ({ onClose, onSave }: CreateAllocationModal
                                 className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-[#4D2B8C] transition"
                                 value={formData.courseId}
                                 onChange={(e) => setFormData({ ...formData, courseId: e.target.value })}
-                                required
                             >
-                                <option value="">Select Course</option>
-                                <option value="C001">Mathematics 101</option>
-                                <option value="C002">Science Foundation</option>
-                                <option value="C003">English Literature</option>
+                                <option value="">Select Course (optional)</option>
+                                {courses.map((c) => (
+                                    <option key={c.id} value={c.id}>{c.title}</option>
+                                ))}
+                                {courses.length === 0 && <option value="" disabled>No courses</option>}
                             </select>
                         </div>
                     </div>
@@ -74,9 +97,10 @@ export const CreateAllocationModal = ({ onClose, onSave }: CreateAllocationModal
                             onChange={(e) => setFormData({ ...formData, trainerId: e.target.value })}
                         >
                             <option value="">Auto-Assign (Based on availability)</option>
-                            <option value="T001">Vikram Malhotra</option>
-                            <option value="T002">Sneha Gupta</option>
-                            <option value="T003">Rajesh Koothrappali</option>
+                            {trainers.map((t) => (
+                                <option key={t.id} value={t.id}>{t.name}</option>
+                            ))}
+                            {trainers.length === 0 && <option value="" disabled>No trainers</option>}
                         </select>
                         <p className="text-xs text-gray-400">If left blank, system will attempt auto-assignment.</p>
                     </div>
@@ -106,6 +130,16 @@ export const CreateAllocationModal = ({ onClose, onSave }: CreateAllocationModal
                                 <option>04:00 PM</option>
                             </select>
                         </div>
+                    </div>
+
+                    <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-gray-500 uppercase">Notes (optional)</label>
+                        <textarea
+                            className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-[#4D2B8C] transition min-h-[80px]"
+                            value={formData.notes}
+                            onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                            placeholder="Allocation notes…"
+                        />
                     </div>
 
                     <div className="space-y-1.5">

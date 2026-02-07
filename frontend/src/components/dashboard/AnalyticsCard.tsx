@@ -208,7 +208,7 @@ const AnalyticsCard = ({ config, onUpdate, onRemove }: AnalyticsCardProps) => {
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
-                data={data}
+                data={data as unknown as Array<Record<string, unknown>>}
                 innerRadius={config.type === "donut" ? 60 : 0}
                 outerRadius={80}
                 paddingAngle={config.type === "donut" ? 5 : 0}

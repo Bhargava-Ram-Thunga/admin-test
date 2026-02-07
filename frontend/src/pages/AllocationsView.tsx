@@ -5,23 +5,31 @@ import {
     MoreVertical,
     X,
     AlertCircle,
-    User,
+    User as UserIcon,
     RefreshCw,
     Plus,
     GraduationCap,
     Settings,
-    RotateCcw
+    RotateCcw,
+    Calendar,
 } from "lucide-react";
 import { CreateAllocationModal } from "../components/modals/CreateAllocationModal";
 import { ReallocationModal } from "../components/modals/ReallocationModal";
 import { AutoAssignmentConfigModal } from "../components/modals/AutoAssignmentConfigModal";
-import type { Allocation } from "../types";
-import { api, getData, postData, putData, ADMIN_API } from "../api/client";
+import type { Allocation, User } from "../types";
+import { getData, postData, putData, ADMIN_API } from "../api/client";
 import type { AllocationApiRow } from "../api/types";
+import { isViewOnlyAdmin } from "../constants/roles";
+import { hasPermission, ALLOCATION_REALLOCATE, ALLOCATION_APPROVE_REJECT, MANAGE_CLASSES } from "../constants/permissions";
 
 function mapAllocationRow(row: AllocationApiRow): Allocation {
     const status = row.status ? row.status.charAt(0).toUpperCase() + row.status.slice(1).toLowerCase() : "Pending";
     const meta = row.metadata || {};
+    const notes = row.notes ?? undefined;
+    const rejectionReason = row.rejectionReason ?? undefined;
+    const failureReason = status === "Rejected" && rejectionReason
+        ? rejectionReason
+        : (status === "Pending" && notes && /failed|auto-assignment/i.test(notes) ? notes : undefined);
     return {
         id: row.id,
         studentId: row.studentId,
@@ -38,15 +46,23 @@ function mapAllocationRow(row: AllocationApiRow): Allocation {
         scheduleMode: (row.scheduleType?.toLowerCase().includes("sunday") ? "SUNDAY_ONLY" : "WEEKDAY_DAILY") as Allocation["scheduleMode"],
         timeSlot: (meta.timeSlot as string) ?? "—",
         startDate: (meta.startDate as string) ?? (row.requestedAt ? new Date(row.requestedAt).toISOString().slice(0, 10) : "—"),
-        notes: row.notes ?? undefined,
+        notes,
+        failureReason,
     };
 }
 
 interface AllocationsViewProps {
-    user: { id?: string };
+    user: User;
+    addToast?: (message: string, type?: "success" | "warning" | "error" | "neutral") => void;
 }
 
-export const AllocationsView = ({ user }: AllocationsViewProps) => {
+export const AllocationsView = ({ user, addToast }: AllocationsViewProps) => {
+    const toast = addToast ?? (() => {});
+    const roleCodes = user.roles?.map((r) => r.code) ?? [];
+    const viewOnly = isViewOnlyAdmin(roleCodes);
+    const canReallocate = hasPermission(user, ALLOCATION_REALLOCATE);
+    const canApproveReject = hasPermission(user, ALLOCATION_APPROVE_REJECT);
+    const canCreateSessions = hasPermission(user, MANAGE_CLASSES);
     const [activeTab, setActiveTab] = useState<"all" | "pending" | "auto" | "history">("all");
     const [selectedAllocation, setSelectedAllocation] = useState<Allocation | null>(null);
     const [isDetailOpen, setIsDetailOpen] = useState(false);
@@ -57,6 +73,9 @@ export const AllocationsView = ({ user }: AllocationsViewProps) => {
     const [allocations, setAllocations] = useState<Allocation[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [students, setStudents] = useState<{ id: string; name: string }[]>([]);
+    const [trainers, setTrainers] = useState<{ id: string; name: string }[]>([]);
+    const [courses, setCourses] = useState<{ id: string; title: string }[]>([]);
 
     const fetchAllocations = useCallback(async () => {
         setLoading(true);
@@ -78,9 +97,30 @@ export const AllocationsView = ({ user }: AllocationsViewProps) => {
         fetchAllocations();
     }, [fetchAllocations]);
 
+    const fetchOptions = useCallback(async () => {
+        const [studentsRes, trainersRes, coursesRes] = await Promise.allSettled([
+            getData<{ data: { studentId: string; fullName: string | null }[] }>("/api/v1/students?limit=200"),
+            getData<{ data: { trainerId: string; fullName: string | null }[] }>("/api/v1/trainers?limit=200"),
+            getData<{ data?: { id: string; title?: string }[]; courses?: { id: string; title?: string }[] }>("/api/v1/courses?limit=100"),
+        ]);
+        if (studentsRes.status === "fulfilled" && studentsRes.value?.data)
+            setStudents(studentsRes.value.data.map((s) => ({ id: s.studentId, name: s.fullName ?? s.studentId })));
+        if (trainersRes.status === "fulfilled" && trainersRes.value?.data)
+            setTrainers(trainersRes.value.data.map((t) => ({ id: t.trainerId, name: t.fullName ?? t.trainerId })));
+        const courseData = coursesRes.status === "fulfilled" ? coursesRes.value : null;
+        const list = Array.isArray(courseData?.data) ? courseData.data : Array.isArray(courseData?.courses) ? courseData.courses : [];
+        setCourses(list.map((c) => ({ id: c.id, title: c.title ?? c.id })));
+    }, []);
+    useEffect(() => {
+        if (isCreateModalOpen || isReallocateModalOpen) fetchOptions();
+    }, [isCreateModalOpen, isReallocateModalOpen, fetchOptions]);
+
     const filteredAllocations = allocations.filter(item => {
         if (activeTab === "pending" && item.status !== "Pending") return false;
-        if (activeTab === "auto" && item.allocatedBy !== "System") return false;
+        if (activeTab === "auto") {
+            const isAuto = item.status === "Pending" && (!item.trainerId || (item.notes && /auto|failed|auto-assignment/i.test(item.notes)));
+            if (!isAuto) return false;
+        }
 
         const matchesSearch =
             item.studentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -105,45 +145,85 @@ export const AllocationsView = ({ user }: AllocationsViewProps) => {
         const adminId = user?.id;
         if (!adminId) {
             setError("Session missing admin ID. Please sign in again.");
+            toast("Session missing admin ID. Please sign in again.", "error");
             return;
         }
-        const created = await postData<AllocationApiRow>(`${ADMIN_API}/allocations`, {
-            studentId: data.studentId,
-            trainerId: data.trainerId ?? null,
-            courseId: data.courseId ?? null,
-            requestedBy: adminId,
-            notes: data.notes ?? null,
-        });
-        setAllocations((prev) => [mapAllocationRow(created), ...prev]);
-        setIsCreateModalOpen(false);
+        try {
+            const created = await postData<AllocationApiRow>(`${ADMIN_API}/allocations`, {
+                studentId: data.studentId,
+                trainerId: data.trainerId ?? null,
+                courseId: data.courseId ?? null,
+                requestedBy: adminId,
+                notes: data.notes ?? null,
+            });
+            setAllocations((prev) => [mapAllocationRow(created), ...prev]);
+            setIsCreateModalOpen(false);
+            toast("Allocation created successfully.", "success");
+        } catch (e) {
+            toast(e instanceof Error ? e.message : "Failed to create allocation", "error");
+        }
     };
 
     const handleReallocate = async (data: { allocationId: string; newTrainerId: string; reason: string }) => {
-        await putData<AllocationApiRow>(`${ADMIN_API}/allocations/${data.allocationId}`, {
-            trainerId: data.newTrainerId,
-            notes: data.reason,
-        });
-        await fetchAllocations();
-        setIsReallocateModalOpen(false);
-        if (selectedAllocation?.id === data.allocationId) setSelectedAllocation(null);
+        try {
+            await putData<AllocationApiRow>(`${ADMIN_API}/allocations/${data.allocationId}`, {
+                trainerId: data.newTrainerId,
+                notes: data.reason,
+            });
+            await fetchAllocations();
+            setIsReallocateModalOpen(false);
+            if (selectedAllocation?.id === data.allocationId) setSelectedAllocation(null);
+            toast("Trainer reallocated successfully.", "success");
+        } catch (e) {
+            toast(e instanceof Error ? e.message : "Reallocation failed", "error");
+        }
     };
 
     const handleStatusChange = async (id: string, newStatus: string) => {
-        if (newStatus === "Approved") await postData(`${ADMIN_API}/allocations/${id}/approve`, {});
-        else if (newStatus === "Rejected") await postData(`${ADMIN_API}/allocations/${id}/reject`, { rejectionReason: "Rejected by admin" });
-        await fetchAllocations();
-        if (selectedAllocation?.id === id) setSelectedAllocation((prev) => (prev ? { ...prev, status: newStatus as Allocation["status"] } : null));
+        try {
+            if (newStatus === "Approved") await postData(`${ADMIN_API}/allocations/${id}/approve`, {});
+            else if (newStatus === "Rejected") await postData(`${ADMIN_API}/allocations/${id}/reject`, { rejectionReason: "Rejected by admin" });
+            await fetchAllocations();
+            if (selectedAllocation?.id === id) setSelectedAllocation((prev) => (prev ? { ...prev, status: newStatus as Allocation["status"] } : null));
+            toast(newStatus === "Approved" ? "Allocation approved." : "Allocation rejected.", newStatus === "Rejected" ? "warning" : "success");
+        } catch (e) {
+            toast(e instanceof Error ? e.message : "Action failed", "error");
+        }
     };
 
     const handleCancelAllocation = async (id: string) => {
-        await postData(`${ADMIN_API}/allocations/${id}/cancel`, {});
-        await fetchAllocations();
-        if (selectedAllocation?.id === id) setIsDetailOpen(false);
+        try {
+            await postData(`${ADMIN_API}/allocations/${id}/cancel`, {});
+            await fetchAllocations();
+            if (selectedAllocation?.id === id) setIsDetailOpen(false);
+            toast("Allocation cancelled.", "warning");
+        } catch (e) {
+            toast(e instanceof Error ? e.message : "Cancel failed", "error");
+        }
     };
 
     const handleRetryAutoAssign = async (allocation: Allocation) => {
-        await postData(`${ADMIN_API}/allocations/retry-auto-assign`, { studentId: allocation.studentId, courseId: allocation.courseId }).catch(() => {});
-        await fetchAllocations();
+        try {
+            await postData(`${ADMIN_API}/allocations/retry-auto-assign`, { studentId: allocation.studentId, courseId: allocation.courseId });
+            await fetchAllocations();
+            toast("Auto-assign retry requested.", "success");
+        } catch (e) {
+            toast(e instanceof Error ? e.message : "Retry failed", "error");
+        }
+    };
+
+    const [creatingSessionsForId, setCreatingSessionsForId] = useState<string | null>(null);
+    const handleCreateSessions = async (allocationId: string) => {
+        setCreatingSessionsForId(allocationId);
+        try {
+            const result = await postData<{ sessionsCreated?: number }>(`${ADMIN_API}/allocations/${allocationId}/create-sessions`, undefined);
+            await fetchAllocations();
+            toast(result?.sessionsCreated != null ? `Created ${result.sessionsCreated} session(s).` : "Sessions created.", "success");
+        } catch (e) {
+            toast(e instanceof Error ? e.message : "Create sessions failed", "error");
+        } finally {
+            setCreatingSessionsForId(null);
+        }
     };
 
     const AllocationDetail = ({ allocation, onClose }: { allocation: Allocation; onClose: () => void }) => (
@@ -173,7 +253,7 @@ export const AllocationsView = ({ user }: AllocationsViewProps) => {
                         {/* Student Info */}
                         <div className="space-y-4">
                             <h3 className="text-lg font-semibold flex items-center gap-2">
-                                <User size={20} className="text-[#4D2B8C]" /> Student Details
+                                <UserIcon size={20} className="text-[#4D2B8C]" /> Student Details
                             </h3>
                             <div className="bg-gray-50 p-4 rounded-lg space-y-2 border border-gray-100">
                                 <p><span className="text-gray-500">Name:</span> {allocation.studentName}</p>
@@ -195,12 +275,14 @@ export const AllocationsView = ({ user }: AllocationsViewProps) => {
                                 ) : (
                                     <div className="flex flex-col gap-2">
                                         <p className="text-yellow-600 italic">No trainer assigned yet</p>
-                                        <button
-                                            onClick={() => setIsReallocateModalOpen(true)}
-                                            className="text-sm text-[#4D2B8C] font-bold hover:underline self-start"
-                                        >
-                                            Assign Manually
-                                        </button>
+                                        {!viewOnly && canReallocate && (
+                                            <button
+                                                onClick={() => setIsReallocateModalOpen(true)}
+                                                className="text-sm text-[#4D2B8C] font-bold hover:underline self-start"
+                                            >
+                                                Assign Manually
+                                            </button>
+                                        )}
                                     </div>
                                 )}
                             </div>
@@ -243,41 +325,61 @@ export const AllocationsView = ({ user }: AllocationsViewProps) => {
                         </div>
                     </div>
 
-                    {/* Action Buttons */}
-                    <div className="flex flex-wrap gap-4 pt-4 border-t border-gray-100">
-                        {allocation.status === 'Pending' && (
-                            <>
+                    {/* Failure reason in detail */}
+                    {allocation.failureReason && (
+                        <div className="p-4 rounded-lg bg-red-50 border border-red-100">
+                            <p className="text-sm font-medium text-red-800">Failure reason</p>
+                            <p className="text-sm text-red-700 mt-1">{allocation.failureReason}</p>
+                        </div>
+                    )}
+
+                    {/* Action Buttons: permission-driven; view-only = no actions */}
+                    {!viewOnly && (canApproveReject || canReallocate || canCreateSessions) && (
+                        <div className="flex flex-wrap gap-4 pt-4 border-t border-gray-100">
+                            {allocation.status === 'Pending' && canApproveReject && (
+                                <>
+                                    <button
+                                        onClick={() => handleStatusChange(allocation.id, 'Approved')}
+                                        className="px-6 py-2 bg-[#4D2B8C] text-white rounded-lg hover:bg-[#4D2B8C]/90 font-medium shadow-lg shadow-[#4D2B8C]/20"
+                                    >
+                                        Approve & Assign
+                                    </button>
+                                    <button
+                                        onClick={() => handleStatusChange(allocation.id, 'Rejected')}
+                                        className="px-6 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 font-medium"
+                                    >
+                                        Reject
+                                    </button>
+                                </>
+                            )}
+                            {(allocation.status === 'Approved' || allocation.status === 'Active') && canCreateSessions && (
                                 <button
-                                    onClick={() => handleStatusChange(allocation.id, 'Approved')}
-                                    className="px-6 py-2 bg-[#4D2B8C] text-white rounded-lg hover:bg-[#4D2B8C]/90 font-medium shadow-lg shadow-[#4D2B8C]/20"
+                                    onClick={() => handleCreateSessions(allocation.id)}
+                                    disabled={creatingSessionsForId === allocation.id}
+                                    className="px-6 py-2 bg-[#4D2B8C] text-white rounded-lg hover:bg-[#4D2B8C]/90 font-medium shadow-lg shadow-[#4D2B8C]/20 disabled:opacity-50 flex items-center gap-2"
                                 >
-                                    Approve & Assign
+                                    {creatingSessionsForId === allocation.id ? <RefreshCw size={18} className="animate-spin" /> : <Calendar size={18} />}
+                                    Create sessions
                                 </button>
+                            )}
+                            {allocation.status === 'Active' && canReallocate && (
                                 <button
-                                    onClick={() => handleStatusChange(allocation.id, 'Rejected')}
-                                    className="px-6 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 font-medium"
+                                    onClick={() => setIsReallocateModalOpen(true)}
+                                    className="px-6 py-2 bg-[#F39EB6]/10 text-[#4D2B8C] rounded-lg hover:bg-[#F39EB6]/20 font-medium flex items-center gap-2"
                                 >
-                                    Reject
+                                    <RefreshCw size={18} /> Reallocate Trainer
                                 </button>
-                            </>
-                        )}
-                        {allocation.status === 'Active' && (
-                            <button
-                                onClick={() => setIsReallocateModalOpen(true)}
-                                className="px-6 py-2 bg-[#F39EB6]/10 text-[#4D2B8C] rounded-lg hover:bg-[#F39EB6]/20 font-medium flex items-center gap-2"
-                            >
-                                <RefreshCw size={18} /> Reallocate Trainer
-                            </button>
-                        )}
-                        {allocation.status !== 'Cancelled' && allocation.status !== 'Rejected' && (
-                            <button
-                                onClick={() => handleCancelAllocation(allocation.id)}
-                                className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 font-medium"
-                            >
-                                Cancel Allocation
-                            </button>
-                        )}
-                    </div>
+                            )}
+                            {allocation.status !== 'Cancelled' && allocation.status !== 'Rejected' && canApproveReject && (
+                                <button
+                                    onClick={() => handleCancelAllocation(allocation.id)}
+                                    className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 font-medium"
+                                >
+                                    Cancel Allocation
+                                </button>
+                            )}
+                        </div>
+                    )}
 
                 </div>
             </div>
@@ -317,7 +419,7 @@ export const AllocationsView = ({ user }: AllocationsViewProps) => {
                         <RefreshCw size={20} className={loading ? "animate-spin" : ""} />
                         Refresh
                     </button>
-                    {activeTab === 'auto' && (
+                    {!viewOnly && canApproveReject && activeTab === 'auto' && (
                         <button
                             onClick={() => setIsAutoConfigModalOpen(true)}
                             className="flex items-center gap-2 px-4 py-2 border border-gray-200 text-gray-600 rounded-lg hover:bg-gray-50 transition-colors"
@@ -326,13 +428,15 @@ export const AllocationsView = ({ user }: AllocationsViewProps) => {
                             Config
                         </button>
                     )}
-                    <button
-                        onClick={() => setIsCreateModalOpen(true)}
-                        className="flex items-center gap-2 px-4 py-2 bg-[#4D2B8C] text-white rounded-lg hover:bg-[#4D2B8C]/90 transition-colors shadow-lg shadow-[#4D2B8C]/20"
-                    >
-                        <Plus size={20} />
-                        Create Allocation
-                    </button>
+                    {!viewOnly && canApproveReject && (
+                        <button
+                            onClick={() => setIsCreateModalOpen(true)}
+                            className="flex items-center gap-2 px-4 py-2 bg-[#4D2B8C] text-white rounded-lg hover:bg-[#4D2B8C]/90 transition-colors shadow-lg shadow-[#4D2B8C]/20"
+                        >
+                            <Plus size={20} />
+                            Create Allocation
+                        </button>
+                    )}
                 </div>
             </div>
 
@@ -386,6 +490,7 @@ export const AllocationsView = ({ user }: AllocationsViewProps) => {
                                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Trainer</th>
                                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Course</th>
                                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+                                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Failure reason</th>
                                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Date</th>
                                 <th className="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
                             </tr>
@@ -417,11 +522,14 @@ export const AllocationsView = ({ user }: AllocationsViewProps) => {
                                             {allocation.status}
                                         </span>
                                     </td>
+                                    <td className="px-6 py-4 text-sm text-gray-600 max-w-xs truncate" title={allocation.failureReason}>
+                                        {allocation.failureReason ? allocation.failureReason : "—"}
+                                    </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                         {allocation.allocatedDate || allocation.requestedDate}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                        {activeTab === 'auto' && allocation.status === 'Pending' ? (
+                                        {!viewOnly && canApproveReject && activeTab === 'auto' && allocation.status === 'Pending' ? (
                                             <button
                                                 onClick={(e) => { e.stopPropagation(); handleRetryAutoAssign(allocation); }}
                                                 className="p-2 text-[#4D2B8C] hover:bg-[#4D2B8C]/10 rounded-full"
@@ -440,7 +548,7 @@ export const AllocationsView = ({ user }: AllocationsViewProps) => {
 
                             {filteredAllocations.length === 0 && (
                                 <tr>
-                                    <td colSpan={7} className="px-6 py-12 text-center text-gray-400">
+                                    <td colSpan={8} className="px-6 py-12 text-center text-gray-400">
                                         No allocations found matching your criteria.
                                     </td>
                                 </tr>
@@ -458,6 +566,9 @@ export const AllocationsView = ({ user }: AllocationsViewProps) => {
                 <CreateAllocationModal
                     onClose={() => setIsCreateModalOpen(false)}
                     onSave={handleCreateAllocation}
+                    students={students}
+                    trainers={trainers}
+                    courses={courses}
                 />
             )}
 
@@ -466,6 +577,7 @@ export const AllocationsView = ({ user }: AllocationsViewProps) => {
                     allocation={selectedAllocation}
                     onClose={() => setIsReallocateModalOpen(false)}
                     onConfirm={handleReallocate}
+                    trainers={trainers}
                 />
             )}
 

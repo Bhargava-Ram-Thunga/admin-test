@@ -101,6 +101,88 @@ export interface TrainerApprovalApiRow {
   profile?: { fullName: string | null; avatarUrl?: string | null } | null;
 }
 
+/** Trainer approval detail from GET /api/v1/admin/trainers/approvals/:trainerId (full application as entered) */
+export interface TrainerApprovalDetailApi {
+  id: string;
+  email: string | null;
+  phone: string | null;
+  username: string | null;
+  approvalStatus: string;
+  isEmailVerified: boolean;
+  isPhoneVerified: boolean;
+  createdAt: string;
+  updatedAt: string;
+  profile?: { fullName: string | null; avatarUrl?: string | null; expertise?: string | null; experienceYears?: number | null; extra?: Record<string, unknown> } | null;
+  application?: {
+    id?: string;
+    applicationStage?: string;
+    education?: string | null;
+    applicationGender?: string;
+    addressText?: string | null;
+    pincode?: string | null;
+    dateOfBirth?: string | null;
+    preferredCity?: string | null;
+    cityId?: string | null;
+    zoneId?: string | null;
+    latitude?: number | null;
+    longitude?: number | null;
+    reviewStatus?: string | null;
+    reviewedBy?: string | null;
+    reviewedAt?: string | null;
+    reviewNotes?: string | null;
+    consentInfoCorrect?: boolean | null;
+    consentBackgroundVerification?: boolean | null;
+    consentTravelToStudents?: boolean | null;
+    submittedAt?: string | null;
+    createdAt?: string | null;
+    updatedAt?: string | null;
+    [key: string]: unknown;
+  } | null;
+  documents?: Array<{
+    documentType?: string;
+    fileUrl?: string | null;
+    fileName?: string | null;
+    verificationStatus?: string | null;
+    [key: string]: unknown;
+  }>;
+  availability?: Array<{ slotStart?: string; slotEnd?: string; employmentType?: string; [key: string]: unknown }>;
+  courses?: Array<{
+    courseName?: string | null;
+    courseCode?: string | null;
+    courseDescription?: string | null;
+    preferenceOrder?: number;
+    courseCategory?: string | null;
+    [key: string]: unknown;
+  }>;
+  skills?: Array<{ skillName?: string | null; skillCategory?: string | null; [key: string]: unknown }>;
+  addresses?: Array<{
+    id?: string;
+    addressText?: string | null;
+    pincode?: string | null;
+    district?: string | null;
+    state?: string | null;
+    country?: string | null;
+    cityId?: string | null;
+    isPrimary?: boolean | null;
+    isVerified?: boolean | null;
+    verifiedBy?: string | null;
+    verifiedAt?: string | null;
+    verificationNotes?: string | null;
+    [key: string]: unknown;
+  }>;
+  baseLocations?: Array<{
+    id?: string;
+    latitude?: number | null;
+    longitude?: number | null;
+    source?: string | null;
+    confidenceScore?: number | null;
+    geocodedAt?: string | null;
+    geocodedBy?: string | null;
+    addressId?: string | null;
+    [key: string]: unknown;
+  }>;
+}
+
 /** Safety incident from GET /api/v1/admin/safety/incidents/all */
 export interface SafetyIncidentApiRow {
   id: string;

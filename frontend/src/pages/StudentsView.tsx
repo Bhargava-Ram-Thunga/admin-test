@@ -1,38 +1,68 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
-import { UserCheck, Search, Plus, X, Edit2, Trash2, RefreshCw } from "lucide-react";
+import { UserCheck, Search, Plus, X, Edit2, Trash2, RefreshCw, Ban, ShieldCheck } from "lucide-react";
 import { Modal } from "../components/ui/Modal";
 import { Card } from "../components/ui/Card";
 import { Badge } from "../components/ui/Badge";
-import { checkPermission } from "../utils/helpers";
+import { checkPermission, getMaxCapacityFromRating } from "../utils/helpers";
 import { Save } from "lucide-react";
 import type { Student, Trainer, User } from "../types";
-import { getData } from "../api/client";
-import type { StudentApiRow } from "../api/types";
+import { getData, postData, putData, ADMIN_API } from "../api/client";
+import type { AllocationApiRow, StudentApiRow, TrainerApiRow } from "../api/types";
 
-function mapStudentRow(row: StudentApiRow): Student {
+/** Payment record from GET /api/v1/payments/student/:studentId (payment-service). */
+interface PaymentRecord {
+  id?: string;
+  studentId?: string;
+  amountCents?: number;
+  currency?: string;
+  status?: string;
+  createdAt?: string;
+  [key: string]: unknown;
+}
+import { isViewOnlyAdmin } from "../constants/roles";
+import { hasPermission, BLOCK_STUDENT } from "../constants/permissions";
+
+function mapTrainerRow(row: TrainerApiRow): Trainer {
+  return {
+    id: row.trainerId,
+    name: row.fullName ?? row.trainerId,
+    regionId: row.state ?? "",
+    regionName: row.city ?? row.state ?? "",
+    status: row.verified ? "Active" : "Pending",
+    students: row.activeStudents ?? 0,
+    capacity: getMaxCapacityFromRating(row.ratingAverage),
+    rating: row.ratingAverage ?? 0,
+    avatarUrl: `https://i.pravatar.cc/150?u=${row.trainerId}`,
+  };
+}
+
+interface StudentEnrichment {
+  trainerId: string;
+  trainerName: string;
+  courseName: string;
+  hasAllocation: boolean;
+}
+
+function mapStudentRow(row: StudentApiRow, enrichment?: StudentEnrichment | null): Student {
   return {
     id: row.studentId,
     name: row.fullName ?? row.studentId,
     email: row.email ?? "",
     regionId: "",
     regionName: "",
-    course: "",
+    course: enrichment?.courseName ?? "",
     status: "Active",
-    paymentStatus: "Pending",
+    paymentStatus: enrichment?.hasAllocation ? "Paid" : "Pending",
     amount: "",
     enrollmentDate: row.createdAt?.slice(0, 10) ?? "",
     avatarUrl: row.avatarUrl ?? `https://i.pravatar.cc/150?u=${row.studentId}`,
-    mentorId: null,
-    mentorName: null,
+    mentorId: enrichment?.trainerId ?? null,
+    mentorName: enrichment?.trainerName ?? null,
   };
 }
 
 interface StudentsViewProps {
   user: User;
-  students: Student[];
-  setStudents: React.Dispatch<React.SetStateAction<Student[]>>;
-  trainers: Trainer[];
-  setTrainers: React.Dispatch<React.SetStateAction<Trainer[]>>;
   addToast: (
     message: string,
     type?: "success" | "warning" | "error" | "neutral"
@@ -41,37 +71,109 @@ interface StudentsViewProps {
 
 export const StudentsView = ({
   user,
-  students: _studentsProp,
-  setStudents: _setStudents,
-  trainers,
-  setTrainers,
   addToast,
 }: StudentsViewProps) => {
+  const roleCodes = user.roles?.map((r) => r.code) ?? [];
+  const viewOnly = isViewOnlyAdmin(roleCodes);
   const [students, setStudentsLocal] = useState<Student[]>([]);
+  const [trainers, setTrainersLocal] = useState<Trainer[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [assignmentFilter, setAssignmentFilter] = useState("All");
+  const [blockedStudentIds, setBlockedStudentIds] = useState<Set<string>>(new Set());
+  const [blockActionId, setBlockActionId] = useState<string | null>(null);
+
+  const fetchBlockedStudentIds = useCallback(async () => {
+    const res = await getData<{ entityIds: string[] }>(`${ADMIN_API}/blocked-ids?entityType=student`).catch(() => ({ entityIds: [] }));
+    setBlockedStudentIds(new Set(res?.entityIds ?? []));
+  }, []);
+
+  const fetchTrainers = useCallback(async () => {
+    const res = await getData<{ data: TrainerApiRow[]; total: number }>("/api/v1/trainers?limit=200").catch(() => ({ data: [], total: 0 }));
+    setTrainersLocal(Array.isArray(res?.data) ? res.data.map(mapTrainerRow) : []);
+  }, []);
 
   const fetchStudents = useCallback(async () => {
     setLoading(true);
     setError(null);
     const params = new URLSearchParams();
-    params.set("limit", "100");
+    params.set("limit", "500");
     if (searchTerm) params.set("search", searchTerm);
     const q = params.toString();
     const path = `/api/v1/students${q ? `?${q}` : ""}`;
-    const res = await getData<{ data: StudentApiRow[]; total: number; page: number; limit: number }>(path).catch((e) => {
-      setError(e instanceof Error ? e.message : "Failed to load students");
-      return { data: [], total: 0, page: 1, limit: 100 };
-    });
-    setStudentsLocal(Array.isArray(res?.data) ? res.data.map(mapStudentRow) : []);
+    const [studentsRes, allocationsRes] = await Promise.all([
+      getData<{ data: StudentApiRow[]; total: number; page: number; limit: number }>(path).catch((e) => {
+        setError(e instanceof Error ? e.message : "Failed to load students");
+        return { data: [], total: 0, page: 1, limit: 100 };
+      }),
+      getData<AllocationApiRow[]>(`${ADMIN_API}/allocations?limit=500`).catch(() => [] as AllocationApiRow[]),
+    ]);
+    const rows = Array.isArray(studentsRes?.data) ? studentsRes.data : [];
+    const allocations = Array.isArray(allocationsRes) ? allocationsRes : [];
+    const enrichmentByStudent = new Map<
+      string,
+      { trainerId: string; trainerName: string; courseName: string; hasAllocation: boolean }
+    >();
+    for (const a of allocations) {
+      if ((a.status === "approved" || a.status === "active") && a.studentId && a.trainerId) {
+        if (!enrichmentByStudent.has(a.studentId)) {
+          const courseName = a.course?.title ?? a.courseId ?? "—";
+          enrichmentByStudent.set(a.studentId, {
+            trainerId: a.trainerId,
+            trainerName: a.trainer?.fullName ?? "—",
+            courseName,
+            hasAllocation: true,
+          });
+        }
+      }
+    }
+    setStudentsLocal(
+      rows.map((row) => {
+        const enrichment = enrichmentByStudent.get(row.studentId);
+        return mapStudentRow(row, enrichment ?? null);
+      })
+    );
     setLoading(false);
   }, [searchTerm]);
 
   useEffect(() => {
     fetchStudents();
   }, [fetchStudents]);
+  useEffect(() => {
+    fetchTrainers();
+  }, [fetchTrainers]);
+  useEffect(() => {
+    fetchBlockedStudentIds();
+  }, [fetchBlockedStudentIds]);
+
+  const canBlock = hasPermission(user, BLOCK_STUDENT);
+  const handleBlockStudent = async (studentId: string) => {
+    if (!canBlock) return;
+    setBlockActionId(studentId);
+    try {
+      await postData(`${ADMIN_API}/students/${studentId}/block`, { reason: "Blocked by admin" });
+      addToast("Student blocked.", "warning");
+      await fetchBlockedStudentIds();
+    } catch (e) {
+      addToast(e instanceof Error ? e.message : "Block failed", "error");
+    } finally {
+      setBlockActionId(null);
+    }
+  };
+  const handleUnblockStudent = async (studentId: string) => {
+    if (!canBlock) return;
+    setBlockActionId(studentId);
+    try {
+      await postData(`${ADMIN_API}/students/${studentId}/unblock`, {});
+      addToast("Student unblocked.", "success");
+      await fetchBlockedStudentIds();
+    } catch (e) {
+      addToast(e instanceof Error ? e.message : "Unblock failed", "error");
+    } finally {
+      setBlockActionId(null);
+    }
+  };
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -92,6 +194,8 @@ export const StudentsView = ({
     mentorId: null,
     mentorName: null,
   });
+  const [profileExtra, setProfileExtra] = useState<Record<string, unknown> | null>(null);
+  const [feeLoading, setFeeLoading] = useState(false);
 
   const filteredStudents = useMemo(() => {
     let result = students.filter((s) => !user.regionId || user.regionId === "ALL" || checkPermission(user, s.regionId));
@@ -110,9 +214,39 @@ export const StudentsView = ({
 
   // --- CRUD HANDLERS (Existing) ---
   const handleOpenModal = (student: Student | null = null) => {
+    setProfileExtra(null);
     if (student) {
       setEditingStudent(student);
-      setFormData({ ...student });
+      setFormData({ ...student, amount: student.amount || "" });
+      setIsModalOpen(true);
+      setFeeLoading(true);
+      Promise.all([
+        getData<PaymentRecord[]>(`/api/v1/payments/student/${student.id}`).catch(() => []),
+        getData<{ extra?: Record<string, unknown>; address?: string | null }>(
+          `/api/v1/students/${student.id}/profile`
+        ).catch(() => null),
+      ])
+        .then(([payments, profile]) => {
+          const list = Array.isArray(payments) ? payments : [];
+          const succeededTotal = list
+            .filter((p) => p.status === "succeeded")
+            .reduce((sum, p) => sum + (Number(p.amountCents) || 0), 0);
+          const amountFromPayments = succeededTotal > 0 ? String(Math.round(succeededTotal / 100)) : "";
+          const amountFromProfile =
+            profile?.extra && typeof profile.extra.feeAmountPaid === "number"
+              ? String(profile.extra.feeAmountPaid)
+              : profile?.extra && typeof profile.extra.feeAmountPaid === "string"
+                ? profile.extra.feeAmountPaid
+                : "";
+          setFormData((prev) => ({
+            ...prev,
+            amount: amountFromPayments || amountFromProfile || "",
+            regionName: prev?.regionName || profile?.address || "",
+          }));
+          setProfileExtra(profile?.extra ?? null);
+        })
+        .catch(() => {})
+        .finally(() => setFeeLoading(false));
     } else {
       setEditingStudent(null);
       setFormData({
@@ -120,40 +254,49 @@ export const StudentsView = ({
         course: "Python Basics",
         regionName: "Hyderabad",
         status: "Active",
-        amount: "15000",
+        amount: "",
         paymentStatus: "Pending",
         email: "",
         mentorId: null,
         mentorName: null,
       });
+      setIsModalOpen(true);
     }
-    setIsModalOpen(true);
   };
 
-  const handleSave = (e: React.FormEvent) => {
+  const [saving, setSaving] = useState(false);
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (editingStudent) {
-      setStudentsLocal((prev) =>
-        prev.map((s) =>
-          s.id === editingStudent.id ? ({ ...s, ...formData } as Student) : s
-        )
-      );
-      addToast("Student details updated successfully", "success");
+      setSaving(true);
+      try {
+        const feeNum = formData.amount?.trim() ? Number(formData.amount.trim()) : null;
+        const hasValidFee = feeNum != null && !Number.isNaN(feeNum);
+        const extra = {
+          ...(typeof profileExtra === "object" && profileExtra !== null ? profileExtra : {}),
+          feeAmountPaid: hasValidFee ? feeNum : null,
+        };
+        await putData(`/api/v1/students/${editingStudent.id}/profile`, {
+          fullName: formData.name?.trim() || null,
+          address: formData.regionName?.trim() || null,
+          extra,
+        });
+        setStudentsLocal((prev) =>
+          prev.map((s) =>
+            s.id === editingStudent.id ? ({ ...s, ...formData } as Student) : s
+          )
+        );
+        addToast("Student profile updated successfully", "success");
+        setIsModalOpen(false);
+      } catch (err) {
+        addToast(err instanceof Error ? err.message : "Failed to update profile", "error");
+      } finally {
+        setSaving(false);
+      }
     } else {
-      // No backend API for creating student — local UI only
-      const newStudent = {
-        ...formData,
-        id: Date.now().toString(),
-        regionId: user.regionId === "ALL" ? "D-01" : user.regionId,
-        enrollmentDate: new Date().toISOString().split("T")[0],
-        avatarUrl: `https://i.pravatar.cc/150?u=${Date.now()}`,
-        mentorId: null,
-        mentorName: null,
-      } as Student;
-      setStudentsLocal((prev) => [newStudent, ...prev]);
-      addToast("New student enrolled (local only — no backend API)", "neutral");
+      addToast("No backend API for creating students. Use student app or backend admin.", "neutral");
+      setIsModalOpen(false);
     }
-    setIsModalOpen(false);
   };
 
   const handleDelete = (id: string) => {
@@ -184,7 +327,7 @@ export const StudentsView = ({
           : s
       )
     );
-    setTrainers((prev) =>
+    setTrainersLocal((prev) =>
       prev.map((t) =>
         t.id === mentor.id ? { ...t, students: t.students + 1 } : t
       )
@@ -200,7 +343,7 @@ export const StudentsView = ({
         s.id === student.id ? { ...s, mentorId: null, mentorName: null } : s
       )
     );
-    setTrainers((prev) =>
+    setTrainersLocal((prev) =>
       prev.map((t) =>
         t.id === student.mentorId
           ? { ...t, students: Math.max(0, t.students - 1) }
@@ -217,7 +360,7 @@ export const StudentsView = ({
       const inScope = checkPermission(user, t.regionId);
       // Must have capacity (assuming logic: current students < capacity)
       // Note: In a real app, calculate 'students' from the actual student list length
-      const hasCapacity = t.students < (t.capacity || 30);
+      const hasCapacity = t.students < (t.capacity || 4);
       return inScope && hasCapacity && t.status === "Active";
     });
   }, [trainers, user]);
@@ -270,14 +413,15 @@ export const StudentsView = ({
               className="bg-transparent outline-none text-sm w-full sm:w-32 text-[#4D2B8C] placeholder-[#4D2B8C]/50"
             />
           </div>
-          {/* Add Student: no backend create API — local-only placeholder */}
-          <button
-            onClick={() => handleOpenModal()}
-            className="bg-[#4D2B8C] text-white p-2 px-4 rounded-xl hover:bg-[#F39EB6] transition shadow-lg shadow-[#4D2B8C]/20 font-bold text-sm flex items-center gap-2 whitespace-nowrap"
-          >
-            <Plus size={18} />
-            <span className="hidden sm:inline">Add Student (local)</span>
-          </button>
+          {!viewOnly && (
+            <button
+              onClick={() => handleOpenModal()}
+              className="bg-[#4D2B8C] text-white p-2 px-4 rounded-xl hover:bg-[#F39EB6] transition shadow-lg shadow-[#4D2B8C]/20 font-bold text-sm flex items-center gap-2 whitespace-nowrap"
+            >
+              <Plus size={18} />
+              <span className="hidden sm:inline">Add Student (local)</span>
+            </button>
+          )}
         </div>
       </div>
       {loading && students.length === 0 && (
@@ -380,37 +524,22 @@ export const StudentsView = ({
               <label className="block text-xs font-bold text-[#4D2B8C] uppercase mb-1">
                 Course
               </label>
-              <select
-                value={formData.course || ""}
-                onChange={(e) =>
-                  setFormData({ ...formData, course: e.target.value })
-                }
-                className="w-full p-3 bg-[#F5F7FA] rounded-xl outline-none font-bold text-[#4D2B8C]"
-              >
-                {[
-                  "Python Basics",
-                  "Web Dev",
-                  "Data Science",
-                  "Cyber Security",
-                  "AI Basics",
-                  "Full Stack Dev",
-                ].map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
-              </select>
+              <div className="w-full p-3 bg-[#F5F7FA]/60 rounded-xl font-bold text-[#4D2B8C] border border-[#4D2B8C]/10">
+                {formData.course || "—"}
+              </div>
+              <p className="text-[10px] text-[#4D2B8C]/60 mt-0.5">From allocation</p>
             </div>
             <div>
               <label className="block text-xs font-bold text-[#4D2B8C] uppercase mb-1">
-                Region
+                Region / Address
               </label>
               <input
                 value={formData.regionName || ""}
                 onChange={(e) =>
                   setFormData({ ...formData, regionName: e.target.value })
                 }
-                className="w-full p-3 bg-[#F5F7FA] rounded-xl outline-none font-bold text-[#4D2B8C]"
+                className="w-full p-3 bg-[#F5F7FA] rounded-xl outline-none font-bold text-[#4D2B8C] focus:ring-2 focus:ring-[#F39EB6]/20"
+                placeholder="Saved to profile"
               />
             </div>
           </div>
@@ -430,43 +559,50 @@ export const StudentsView = ({
                 <option value="Completed">Completed</option>
                 <option value="Dropped">Dropped</option>
               </select>
+              <p className="text-[10px] text-[#4D2B8C]/60 mt-0.5">Local only</p>
             </div>
             <div>
               <label className="block text-xs font-bold text-[#4D2B8C] uppercase mb-1">
                 Payment
               </label>
-              <select
-                value={formData.paymentStatus || "Pending"}
-                onChange={(e) =>
-                  setFormData({ ...formData, paymentStatus: e.target.value })
-                }
-                className="w-full p-3 bg-[#F5F7FA] rounded-xl outline-none font-bold text-[#4D2B8C]"
-              >
-                <option value="Paid">Paid</option>
-                <option value="Pending">Pending</option>
-                <option value="Overdue">Overdue</option>
-              </select>
+              <div className="w-full p-3 bg-[#F5F7FA]/60 rounded-xl font-bold text-[#4D2B8C] border border-[#4D2B8C]/10">
+                {formData.paymentStatus || "Pending"}
+              </div>
+              <p className="text-[10px] text-[#4D2B8C]/60 mt-0.5">From allocation</p>
             </div>
           </div>
           <div>
             <label className="block text-xs font-bold text-[#4D2B8C] uppercase mb-1">
               Fee Amount (₹)
             </label>
-            <input
-              type="number"
-              value={formData.amount || ""}
-              onChange={(e) =>
-                setFormData({ ...formData, amount: e.target.value })
-              }
-              className="w-full p-3 bg-[#F5F7FA] rounded-xl outline-none font-bold text-[#4D2B8C]"
-            />
+            {feeLoading ? (
+              <div className="w-full p-3 bg-[#F5F7FA]/60 rounded-xl font-bold text-[#4D2B8C]/70 border border-[#4D2B8C]/10">
+                Loading…
+              </div>
+            ) : (
+              <input
+                type="text"
+                inputMode="numeric"
+                value={formData.amount ?? ""}
+                onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                className="w-full p-3 bg-[#F5F7FA] rounded-xl outline-none font-bold text-[#4D2B8C] focus:ring-2 focus:ring-[#F39EB6]/20 border border-[#4D2B8C]/10"
+                placeholder="—"
+              />
+            )}
+            <p className="text-[10px] text-[#4D2B8C]/60 mt-0.5">From purchase record; editable and saved to profile if missing</p>
           </div>
 
           <button
             type="submit"
-            className="w-full bg-[#4D2B8C] text-white py-3 rounded-xl font-bold hover:bg-[#F39EB6] transition shadow-lg mt-4 flex items-center justify-center gap-2"
+            disabled={saving}
+            className="w-full bg-[#4D2B8C] text-white py-3 rounded-xl font-bold hover:bg-[#F39EB6] transition shadow-lg mt-4 flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
           >
-            <Save size={18} /> Save Record
+            {saving ? (
+              <RefreshCw size={18} className="animate-spin" />
+            ) : (
+              <Save size={18} />
+            )}{" "}
+            Save Record
           </button>
         </form>
       </Modal>
@@ -506,6 +642,11 @@ export const StudentsView = ({
                         <p className="text-xs text-[#4D2B8C]">
                           {s.enrollmentDate}
                         </p>
+                        {blockedStudentIds.has(s.id) && (
+                          <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800">
+                            <Ban size={12} /> Blocked
+                          </span>
+                        )}
                       </div>
                     </div>
                   </td>
@@ -523,22 +664,25 @@ export const StudentsView = ({
                         <span className="text-xs font-bold bg-[#4D2B8C]/10 text-[#4D2B8C] px-2 py-1 rounded-md">
                           {s.mentorName}
                         </span>
-                        {/* Quick Unassign Button */}
-                        <button
-                          onClick={() => handleUnassignMentor(s)}
-                          className="opacity-0 group-hover/mentor:opacity-100 text-[#F39EB6] hover:text-red-500 transition-opacity"
-                          title="Unassign Mentor"
-                        >
-                          <X size={14} />
-                        </button>
+                        {!viewOnly && (
+                          <button
+                            onClick={() => handleUnassignMentor(s)}
+                            className="opacity-0 group-hover/mentor:opacity-100 text-[#F39EB6] hover:text-red-500 transition-opacity"
+                            title="Unassign Mentor"
+                          >
+                            <X size={14} />
+                          </button>
+                        )}
                       </div>
                     ) : (
-                      <button
-                        onClick={() => handleOpenAssignModal(s)}
-                        className="text-xs font-bold bg-[#4D2B8C]/10 text-[#4D2B8C] px-3 py-1 rounded-full hover:bg-[#4D2B8C] hover:text-white transition flex items-center gap-1"
-                      >
-                        Assign <Plus size={12} />
-                      </button>
+                      !viewOnly && (
+                        <button
+                          onClick={() => handleOpenAssignModal(s)}
+                          className="text-xs font-bold bg-[#4D2B8C]/10 text-[#4D2B8C] px-3 py-1 rounded-full hover:bg-[#4D2B8C] hover:text-white transition flex items-center gap-1"
+                        >
+                          Assign <Plus size={12} />
+                        </button>
+                      )
                     )}
                   </td>
 
@@ -561,34 +705,56 @@ export const StudentsView = ({
                     />
                   </td>
                   <td className="p-4 text-right pr-6">
-                    <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button
-                        onClick={() => handleOpenModal(s)}
-                        className="p-2 hover:bg-white hover:shadow-md rounded-lg text-[#4D2B8C] hover:text-[#4D2B8C]/80 transition"
-                        title="Edit Student"
-                      >
-                        <Edit2 size={16} />
-                      </button>
-
-                      {/* Reassign Option (if already assigned) */}
-                      {s.mentorId && (
+                    {!viewOnly && (
+                      <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity flex-wrap">
+                        {canBlock && (
+                          blockedStudentIds.has(s.id) ? (
+                            <button
+                              onClick={() => handleUnblockStudent(s.id)}
+                              disabled={!!blockActionId}
+                              className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-xs font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:opacity-50"
+                              title="Unblock"
+                            >
+                              {blockActionId === s.id ? <RefreshCw size={14} className="animate-spin" /> : <ShieldCheck size={14} />}
+                              Unblock
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => handleBlockStudent(s.id)}
+                              disabled={!!blockActionId}
+                              className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-xs font-medium bg-amber-50 text-amber-700 hover:bg-amber-100 disabled:opacity-50"
+                              title="Block"
+                            >
+                              {blockActionId === s.id ? <RefreshCw size={14} className="animate-spin" /> : <Ban size={14} />}
+                              Block
+                            </button>
+                          )
+                        )}
                         <button
-                          onClick={() => handleOpenAssignModal(s)}
+                          onClick={() => handleOpenModal(s)}
                           className="p-2 hover:bg-white hover:shadow-md rounded-lg text-[#4D2B8C] hover:text-[#4D2B8C]/80 transition"
-                          title="Reassign Mentor"
+                          title="Edit Student"
                         >
-                          <UserCheck size={16} />
+                          <Edit2 size={16} />
                         </button>
-                      )}
-
-                      <button
-                        onClick={() => handleDelete(s.id)}
-                        className="p-2 hover:bg-red-50 hover:shadow-md rounded-lg text-[#F39EB6] hover:text-red-500 transition"
-                        title="Delete Student"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
+                        {s.mentorId && (
+                          <button
+                            onClick={() => handleOpenAssignModal(s)}
+                            className="p-2 hover:bg-white hover:shadow-md rounded-lg text-[#4D2B8C] hover:text-[#4D2B8C]/80 transition"
+                            title="Reassign Mentor"
+                          >
+                            <UserCheck size={16} />
+                          </button>
+                        )}
+                        <button
+                          onClick={() => handleDelete(s.id)}
+                          className="p-2 hover:bg-red-50 hover:shadow-md rounded-lg text-[#F39EB6] hover:text-red-500 transition"
+                          title="Delete Student"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    )}
                   </td>
                 </tr>
               ))}
