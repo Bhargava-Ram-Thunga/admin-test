@@ -2,12 +2,14 @@ import { useState } from "react";
 import { X, RefreshCw } from "lucide-react";
 
 interface ReallocationModalProps {
-    allocation: any;
+    allocation: { id: string; studentName: string; trainerName?: string | null };
     onClose: () => void;
-    onConfirm: (data: any) => void;
+    onConfirm: (data: { allocationId: string; newTrainerId: string; reason: string }) => void;
+    /** List of trainers for dropdown (same as CreateAllocationModal). */
+    trainers?: { id: string; name: string }[];
 }
 
-export const ReallocationModal = ({ allocation, onClose, onConfirm }: ReallocationModalProps) => {
+export const ReallocationModal = ({ allocation, onClose, onConfirm, trainers = [] }: ReallocationModalProps) => {
     const [newTrainerId, setNewTrainerId] = useState("");
     const [reason, setReason] = useState("Scheduling Conflict");
 
@@ -46,9 +48,10 @@ export const ReallocationModal = ({ allocation, onClose, onConfirm }: Reallocati
                             required
                         >
                             <option value="">Select New Trainer</option>
-                            <option value="T001">Vikram Malhotra</option>
-                            <option value="T002">Sneha Gupta</option>
-                            <option value="T003">Rajesh Koothrappali</option>
+                            {trainers.map((t) => (
+                                <option key={t.id} value={t.id}>{t.name}</option>
+                            ))}
+                            {trainers.length === 0 && <option value="" disabled>No trainers loaded</option>}
                         </select>
                     </div>
 

@@ -1,14 +1,38 @@
 @import "tailwindcss";
 
 :root {
-  --color-primary-purple: #4D2B8C;
-  /* Deep Purple */
+  --color-primary-purple: #5E35B1;
   --color-accent-blue: #3498db;
-  /* Light Blue */
-  --color-bg-light: #F0F7FF;
-  /* Soft Blue */
-  --color-secondary-purple: #F39EB6;
-  /* Pastel Pink */
+  --color-bg-light: #f8fafc;
+  --color-secondary-purple: #EDE7F6;
+  --color-loading-violet: #EDE7F6;
+}
+
+/* Light violet loading pulse */
+@keyframes loading-pulse {
+  0%, 100% { opacity: 0.6; background-color: var(--color-loading-violet); }
+  50% { opacity: 1; background-color: #DDD6FE; }
+}
+
+.loading-violet {
+  animation: loading-pulse 1.2s ease-in-out infinite;
+  background-color: var(--color-loading-violet);
+}
+
+.loading-violet-skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--color-loading-violet) 0%,
+    #DDD6FE 50%,
+    var(--color-loading-violet) 100%
+  );
+  background-size: 200% 100%;
+  animation: loading-shimmer 1.2s ease-in-out infinite;
+}
+
+@keyframes loading-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }
 
 /* Custom Scrollbar Utility */

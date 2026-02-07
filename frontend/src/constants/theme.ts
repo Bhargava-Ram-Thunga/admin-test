@@ -1,12 +1,13 @@
 export const THEME = {
     colors: {
         primary: {
-            teal: "#4D2B8C", // Tailwind Blue (Charts, Active) -> Mapped to primary
-            navy: "#4D2B8C", // Deep Purple (Sidebar, Headings)
-            indigo: "#3498db", // Light Blue (Neutral, Cards)
-            pink: "#F39EB6", // Pastel Pink (Accents, Hover)
-            bgGradient: "from-[#4D2B8C] to-[#4D2B8C]", // Solid primary now
-            sidebarBg: "#4D2B8C", // Deep Purple
+            purple: "#5E35B1", // Kodingcaravan accent (active nav, chart highlight)
+            teal: "#4D2B8C",
+            navy: "#4D2B8C",
+            indigo: "#3498db",
+            pink: "#F39EB6",
+            bgGradient: "from-[#5E35B1] to-[#4D2B8C]",
+            sidebarBg: "#ffffff",
         },
     },
 };

@@ -1,13 +1,25 @@
 import type { LucideIcon } from "lucide-react";
 
+/** Backend admin role (from login/me). */
+export type AdminRole = { code: string; name?: string };
+
 export interface User {
   id?: string; // Admin ID from backend (for API calls that require requestedBy, etc.)
   email: string;
   name: string;
-  role: string;
+  role: string; // Display label (e.g. "Super Admin")
   regionId: string;
   avatarUrl: string;
   password?: string;
+  // Backend-aligned fields (from admin-service login/me)
+  roles?: AdminRole[];
+  /** Permission codes from backend (e.g. tutor:approve). Drive UI actions from this, not role. */
+  permissions?: string[];
+  adminType?: "company" | "franchise";
+  state?: string | null;
+  district?: string | null;
+  zone?: string | null;
+  locality?: string | null;
 }
 
 export interface Student {
@@ -104,6 +116,8 @@ export interface Allocation {
   timeSlot: string;
   startDate: string;
   notes?: string;
+  /** When status is Rejected or auto-assign failed (from backend rejectionReason / notes). */
+  failureReason?: string;
 }
 
 export type SessionStatus = "Scheduled" | "In Progress" | "Completed" | "Cancelled" | "Disputed";
@@ -133,8 +147,9 @@ export type RescheduleStatus = "Pending" | "Approved" | "Rejected" | "Cancelled"
 export interface RescheduleRequest {
   id: string;
   sessionId: string;
-  studentName: string;
-  trainerName: string;
+  /** Backend only returns IDs for reschedule list. */
+  studentId: string;
+  trainerId: string;
   courseName: string;
   originalDate: string;
   originalTime: string;

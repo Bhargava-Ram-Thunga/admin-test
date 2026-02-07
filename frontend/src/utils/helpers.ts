@@ -1,4 +1,3 @@
-import { MOCK_HIERARCHY } from "../data/mockData";
 import { HIERARCHY_LEVELS } from "../constants/theme";
 import type {
   HierarchyNode,
@@ -6,6 +5,16 @@ import type {
   ChartConfig,
   ChartDataPoint,
 } from "../types";
+
+/** Max student allocations (4–8) from rating; matches backend allocation.service getTrainerMaxAllocationCount */
+export function getMaxCapacityFromRating(rating: number | null): number {
+  const r = rating ?? 0;
+  if (r >= 4.6) return 8;
+  if (r >= 4.1) return 7;
+  if (r >= 3.6) return 6;
+  if (r >= 3.1) return 5;
+  return 4; // 2.1–3.0 or no rating
+}
 
 export const getDescendantIds = (node: HierarchyNode): string[] => {
   let ids = [node.id];
@@ -17,7 +26,6 @@ export const getDescendantIds = (node: HierarchyNode): string[] => {
   return ids;
 };
 
-// Gets all descendants of a specific TYPE from a given starting node
 export const getDescendantsByType = (
   node: HierarchyNode,
   targetType: string
@@ -34,54 +42,42 @@ export const getDescendantsByType = (
   return results;
 };
 
-
+/** Scope IDs from backend user location (state, district, zone, locality). */
 export const getScopeIds = (user: User): string[] => {
   if (user.regionId === "ALL") return ["ALL"];
-  const findNode = (
-    nodes: HierarchyNode[],
-    id: string
-  ): HierarchyNode | null => {
-    for (const node of nodes) {
-      if (node.id === id) return node;
-      if (node.children) {
-        const found = findNode(node.children, id);
-        if (found) return found;
-      }
-    }
-    return null;
-  };
-  const rootNode = findNode(MOCK_HIERARCHY, user.regionId);
-  return rootNode ? getDescendantIds(rootNode) : [];
+  const ids: string[] = [];
+  if (user.state) ids.push(user.state);
+  if (user.district) ids.push(user.district);
+  if (user.zone) ids.push(user.zone);
+  if (user.locality) ids.push(user.locality);
+  return ids.length ? ids : [user.regionId];
 };
 
+/**
+ * Check if user can access an item by scope/region (backend location fields).
+ * Note: This is a scope/region check (itemRegionId), not a permission-code check.
+ * For permission codes (e.g. operations:manage_classes), use hasPermission from constants/permissions.
+ */
 export const checkPermission = (user: User, itemRegionId: string): boolean => {
   if (user.regionId === "ALL") return true;
   const allowedIds = getScopeIds(user);
   return allowedIds.includes(itemRegionId);
 };
 
-// Returns the index of the level (0=State, 4=Mandal)
 export const getLevelIndex = (type: string): number =>
   HIERARCHY_LEVELS.indexOf(type);
 
-// Determines the user's hierarchy level index based on their assigned node
+/** Admin level from backend location: state=0, district=1, zone=2, locality=3, ALL=-1. */
 export const getAdminLevelIndex = (user: User): number | null => {
-  if (user.regionId === "ALL") return -1; // Super Admin (above State)
-
-  const findNodeLevel = (nodes: HierarchyNode[], id: string): number | null => {
-    for (const node of nodes) {
-      if (node.id === id) return getLevelIndex(node.type);
-      if (node.children) {
-        const found = findNodeLevel(node.children, id);
-        if (found !== null) return found;
-      }
-    }
-    return null;
-  };
-  return findNodeLevel(MOCK_HIERARCHY, user.regionId);
+  if (user.regionId === "ALL") return -1;
+  if (user.locality) return 3;
+  if (user.zone) return 2;
+  if (user.district) return 1;
+  if (user.state) return 0;
+  return null;
 };
 
-// Generates fake analytics based on config
+/** Generate placeholder chart data (backend can replace with real analytics). */
 export const generateAnalyticsData = (
   config: ChartConfig
 ): ChartDataPoint[] => {
@@ -96,23 +92,22 @@ export const generateAnalyticsData = (
       labels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun"];
     else labels = ["2022", "2023", "2024", "2025"];
   } else {
-    // Dynamic labels based on region type would be ideal, but mock data for now
-    if (regionType === "State") labels = ["Telangana", "Andhra Pradesh"];
+    if (regionType === "State") labels = ["State A", "State B"];
     else if (regionType === "District")
-      labels = ["Hyderabad", "Warangal", "Ranga Reddy"];
-    else labels = ["Zone A", "Zone B", "Zone C", "Zone D"];
+      labels = ["District A", "District B", "District C"];
+    else labels = ["Zone A", "Zone B", "Zone C"];
   }
   return labels.map((label) => {
     let value = 0;
     switch (metric) {
       case "students":
-        value = Math.floor(Math.random() * 5000) + 1000;
+        value = Math.floor(Math.random() * 500) + 100;
         break;
       case "revenue":
-        value = Math.floor(Math.random() * 1000000) + 50000;
+        value = Math.floor(Math.random() * 100000) + 5000;
         break;
       case "teachers":
-        value = Math.floor(Math.random() * 200) + 20;
+        value = Math.floor(Math.random() * 50) + 10;
         break;
       case "attendance":
         value = Math.floor(Math.random() * 30) + 70;
@@ -121,9 +116,8 @@ export const generateAnalyticsData = (
         value = Math.floor(Math.random() * 100) - 20;
         break;
       default:
-        value = Math.floor(Math.random() * 1000);
+        value = Math.floor(Math.random() * 100);
     }
     return { name: label, value };
   });
 };
-

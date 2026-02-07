@@ -1,21 +1,29 @@
-/** Analytics: Backend has GET /api/v1/admin/demand/analytics and analytics-service metrics; not wired here. UI uses mock charts. */
-import { useState } from "react";
-import { Plus } from "lucide-react";
+/** Analytics: Backend GET /api/v1/admin/demand/analytics. */
+import { useState, useEffect, useCallback } from "react";
+import { Plus, RefreshCw } from "lucide-react";
 import AnalyticsCard from "../components/dashboard/AnalyticsCard";
 import { THEME, CHART_COLORS } from "../constants/theme";
-import type { ChartConfig, Student, Trainer, User } from "../types";
+import type { ChartConfig, User } from "../types";
+import { getData } from "../api/client";
+import { ADMIN_API } from "../api/client";
+import type { DemandAnalyticsApi } from "../api/types";
 
 interface AnalyticsViewProps {
   user: User;
-  students: Student[];
-  trainers: Trainer[];
 }
 
-export const AnalyticsView = ({ }: AnalyticsViewProps) => {
-  // Note: props user, students, trainers are passed but unused in the original code,
-  // so we keep the interface but destructure safely to avoid unused warnings or linter errors if strict.
-  // In original code: const AnalyticsView = () => { ... } so it ignored props entirely.
-  // We match that behavior.
+export const AnalyticsView = ({ user: _user }: AnalyticsViewProps) => {
+  const [demand, setDemand] = useState<DemandAnalyticsApi | null>(null);
+  const [loading, setLoading] = useState(true);
+  const fetchAnalytics = useCallback(async () => {
+    setLoading(true);
+    const data = await getData<DemandAnalyticsApi>(`${ADMIN_API}/demand/analytics`).catch(() => null);
+    setDemand(data ?? null);
+    setLoading(false);
+  }, []);
+  useEffect(() => {
+    fetchAnalytics();
+  }, [fetchAnalytics]);
 
   const [charts, setCharts] = useState<ChartConfig[]>([
     {
@@ -72,16 +80,25 @@ export const AnalyticsView = ({ }: AnalyticsViewProps) => {
             Analytics Workspace
           </h1>
           <p className="text-[#4D2B8C] text-base mt-2">
-            Create, compare, and analyze multiple datasets dynamically.
+            Demand analytics from backend. Waitlist: {demand?.waitlistCount ?? "—"}, blocked: {demand?.purchaseBlockedCount ?? "—"}.
           </p>
         </div>
-        <button
-          onClick={addChart}
-          className="bg-[#4D2B8C] text-white px-6 py-4 rounded-2xl text-sm font-bold flex items-center gap-3 hover:bg-[#F39EB6] transition shadow-lg shadow-[#4D2B8C]/20"
-        >
-          <Plus size={20} /> Add Comparison Graph
-        </button>
-        <button
+        <div className="flex gap-2 flex-wrap">
+          <button
+            onClick={fetchAnalytics}
+            disabled={loading}
+            className="p-2 rounded-xl border border-[#4D2B8C]/20 text-[#4D2B8C] hover:bg-[#4D2B8C]/5 disabled:opacity-50"
+            title="Refresh"
+          >
+            <RefreshCw size={20} className={loading ? "animate-spin" : ""} />
+          </button>
+          <button
+            onClick={addChart}
+            className="bg-[#4D2B8C] text-white px-6 py-4 rounded-2xl text-sm font-bold flex items-center gap-3 hover:bg-[#F39EB6] transition shadow-lg shadow-[#4D2B8C]/20"
+          >
+            <Plus size={20} /> Add Comparison Graph
+          </button>
+          <button
           onClick={() => {
             console.log("Exporting report...");
             // TODO: Enable API export
@@ -91,6 +108,7 @@ export const AnalyticsView = ({ }: AnalyticsViewProps) => {
         >
           Export Report
         </button>
+      </div>
       </div>
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
         {charts.map((chart) => (

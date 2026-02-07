@@ -14,18 +14,19 @@ import {
     AlertTriangle,
     RefreshCw
 } from "lucide-react";
-import { MOCK_SESSIONS, MOCK_CALENDAR_SESSIONS } from "../data/mockData";
 import { SessionDetailModal } from "../components/modals/SessionDetailModal";
 import type { Session, RescheduleRequest, VerificationStatus } from "../types";
-import { getData, postData, ADMIN_API } from "../api/client";
+import { getData, postData, ADMIN_API, ApiError } from "../api/client";
 import type { RescheduleApiRow } from "../api/types";
+import { hasPermission, SESSION_RESCHEDULE } from "../constants/permissions";
+import type { User } from "../types";
 
 function mapRescheduleRow(row: RescheduleApiRow): RescheduleRequest {
     return {
         id: row.id,
         sessionId: row.sessionId,
-        studentName: row.studentId,
-        trainerName: row.trainerId,
+        studentId: row.studentId,
+        trainerId: row.trainerId,
         courseName: "",
         originalDate: row.originalDate?.slice(0, 10) ?? "",
         originalTime: row.originalTime ?? "",
@@ -39,11 +40,15 @@ function mapRescheduleRow(row: RescheduleApiRow): RescheduleRequest {
 }
 
 interface SessionsViewProps {
-    user: any;
+    user: User;
+    addToast?: (message: string, type?: "success" | "warning" | "error" | "neutral") => void;
 }
 
-export const SessionsView = ({ user: _user }: SessionsViewProps) => {
-    const [activeTab, setActiveTab] = useState<"all" | "reschedule" | "calendar" | "analytics">("all");
+export const SessionsView = ({ user, addToast }: SessionsViewProps) => {
+    const toast = addToast ?? (() => {});
+    const canReschedule = hasPermission(user, SESSION_RESCHEDULE);
+    // Default to Reschedule Requests (backend has no list-all sessions endpoint)
+    const [activeTab, setActiveTab] = useState<"all" | "reschedule" | "calendar" | "analytics">("reschedule");
     const [searchTerm, setSearchTerm] = useState("");
     const [selectedSession, setSelectedSession] = useState<Session | null>(null);
     const [isDetailOpen, setIsDetailOpen] = useState(false);
@@ -52,6 +57,8 @@ export const SessionsView = ({ user: _user }: SessionsViewProps) => {
     const [reschedules, setReschedules] = useState<RescheduleRequest[]>([]);
     const [reschedulesLoading, setReschedulesLoading] = useState(true);
     const [reschedulesError, setReschedulesError] = useState<string | null>(null);
+    const [rescheduleActionId, setRescheduleActionId] = useState<string | null>(null);
+    const [rescheduleError, setRescheduleError] = useState<string | null>(null);
     const fetchReschedules = useCallback(async () => {
         setReschedulesLoading(true);
         setReschedulesError(null);
@@ -66,13 +73,13 @@ export const SessionsView = ({ user: _user }: SessionsViewProps) => {
         if (activeTab === "reschedule") fetchReschedules();
     }, [activeTab, fetchReschedules]);
 
-    const [sessions] = useState<Session[]>(MOCK_SESSIONS as unknown as Session[]);
+    // All Sessions: no backend list API (only per-student/per-trainer); show empty state
+    const [sessions] = useState<Session[]>([]);
 
-    // Calendar State
+    // Calendar State (no backend calendar API; empty until endpoint exists)
     const [currentDate, setCurrentDate] = useState(new Date());
     const [calendarFilter, setCalendarFilter] = useState({ trainer: "", status: "" });
-    // Local state for calendar sessions to support drag-and-drop updates
-    const [calendarSessions, setCalendarSessions] = useState(MOCK_CALENDAR_SESSIONS);
+    const [calendarSessions, setCalendarSessions] = useState<{ id: string; date: Date; time: string; studentName: string; trainerName: string; status: string; trainerId?: string }[]>([]);
 
     // Helper to get days in month
     const getDaysInMonth = (date: Date) => {
@@ -119,9 +126,37 @@ export const SessionsView = ({ user: _user }: SessionsViewProps) => {
     };
 
     const handleRescheduleAction = async (id: string, action: 'Approved' | 'Rejected') => {
-        if (action === "Approved") await postData(`${ADMIN_API}/reschedule/${id}/approve`, {});
-        else await postData(`${ADMIN_API}/reschedule/${id}/reject`, { rejectionReason: "Rejected by admin" });
-        await fetchReschedules();
+        if (!canReschedule) return;
+        setRescheduleActionId(id);
+        setRescheduleError(null);
+        try {
+            if (action === "Approved") {
+                await postData(`${ADMIN_API}/reschedule/${id}/approve`, {});
+                toast("Reschedule request approved.", "success");
+            } else {
+                const reason = window.prompt("Rejection reason (optional):")?.trim() || "Rejected by admin";
+                await postData(`${ADMIN_API}/reschedule/${id}/reject`, { rejectionReason: reason });
+                toast("Reschedule request rejected.", "warning");
+            }
+            await fetchReschedules();
+        } catch (e: unknown) {
+            const status = e instanceof ApiError ? e.status : undefined;
+            const msg = e instanceof Error ? e.message : "Action failed";
+            let display = msg;
+            if (status === 409) {
+                display = "This reschedule request has already been reviewed.";
+            } else {
+                try {
+                    const parsed = typeof msg === "string" && msg.startsWith("{") ? JSON.parse(msg) : null;
+                    if (parsed?.message) display = parsed.message;
+                } catch { /* use msg */ }
+            }
+            setRescheduleError(display);
+            toast(display, "error");
+            if (status === 409) await fetchReschedules();
+        } finally {
+            setRescheduleActionId(null);
+        }
     };
 
     // Session reschedule from detail: backend has reschedule request flow; no direct "cancel session" from this UI
@@ -214,9 +249,6 @@ export const SessionsView = ({ user: _user }: SessionsViewProps) => {
                             onChange={(e) => setCalendarFilter({ ...calendarFilter, trainer: e.target.value })}
                         >
                             <option value="">All Trainers</option>
-                            <option value="Ravi">Ravi Teja</option>
-                            <option value="Lakshmi">Lakshmi Narayan</option>
-                            <option value="Vikram">Vikram Raju</option>
                         </select>
                         <select
                             className="p-2 border border-gray-200 rounded-lg text-sm bg-gray-50 focus:outline-none focus:border-[#4D2B8C]"
@@ -420,8 +452,11 @@ export const SessionsView = ({ user: _user }: SessionsViewProps) => {
                                     ))}
                                     {filteredSessions.length === 0 && (
                                         <tr>
-                                            <td colSpan={7} className="px-6 py-12 text-center text-gray-400">
-                                                No sessions found.
+                                            <td colSpan={7} className="px-6 py-12 text-center">
+                                                <div className="max-w-md mx-auto text-gray-500 space-y-2">
+                                                    <p className="font-medium">No sessions listed here.</p>
+                                                    <p className="text-sm">The backend has no &quot;list all sessions&quot; endpoint. Sessions are available per student or per trainer. Use the <strong>Reschedule Requests</strong> tab to approve or reject reschedule requests, or open an allocation to see its sessions.</p>
+                                                </div>
                                             </td>
                                         </tr>
                                     )}
@@ -450,6 +485,12 @@ export const SessionsView = ({ user: _user }: SessionsViewProps) => {
                     {reschedulesLoading && reschedules.length === 0 && (
                         <div className="p-8 text-center text-gray-500">Loading reschedule requests…</div>
                     )}
+                    {rescheduleError && (
+                        <div className="p-4 bg-red-50 border-b border-red-100 text-red-800 text-sm flex items-center justify-between">
+                            <span>{rescheduleError}</span>
+                            <button onClick={() => setRescheduleError(null)} className="px-2 py-1 bg-red-100 hover:bg-red-200 rounded text-xs font-medium">Dismiss</button>
+                        </div>
+                    )}
                     {!reschedulesLoading && reschedules.length === 0 && !reschedulesError && (
                         <div className="p-8 text-center text-gray-500">No reschedule requests.</div>
                     )}
@@ -459,6 +500,8 @@ export const SessionsView = ({ user: _user }: SessionsViewProps) => {
                             <tr>
                                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Request ID</th>
                                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Session</th>
+                                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Student ID</th>
+                                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Trainer ID</th>
                                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Requester</th>
                                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Old Date</th>
                                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">New Date</th>
@@ -472,28 +515,33 @@ export const SessionsView = ({ user: _user }: SessionsViewProps) => {
                                 <tr key={req.id}>
                                     <td className="px-6 py-4 text-sm font-medium">{req.id}</td>
                                     <td className="px-6 py-4 text-sm text-gray-600">{req.sessionId}</td>
+                                    <td className="px-6 py-4 text-xs font-mono text-gray-600">{req.studentId}</td>
+                                    <td className="px-6 py-4 text-xs font-mono text-gray-600">{req.trainerId}</td>
                                     <td className="px-6 py-4 text-sm text-gray-600">{req.requestedBy}</td>
                                     <td className="px-6 py-4 text-sm text-gray-600">{req.originalDate} <br /><span className="text-xs">{req.originalTime}</span></td>
                                     <td className="px-6 py-4 text-sm font-medium text-[#4D2B8C]">{req.newDate} <br /><span className="text-xs">{req.newTime}</span></td>
                                     <td className="px-6 py-4 text-sm text-gray-600 truncate max-w-xs">{req.reason}</td>
                                     <td className="px-6 py-4"><span className={`px-2 py-1 rounded-full text-xs font-bold ${req.status === 'Pending' ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-800'}`}>{req.status}</span></td>
                                     <td className="px-6 py-4 text-right">
-                                        {req.status === 'Pending' && (
+                                        {req.status === 'Pending' && canReschedule && (
                                             <>
                                                 <button
                                                     onClick={() => handleRescheduleAction(req.id, 'Approved')}
-                                                    className="text-[#4D2B8C] hover:text-[#F39EB6] text-sm font-medium mr-3"
+                                                    disabled={!!rescheduleActionId}
+                                                    className="text-[#4D2B8C] hover:text-[#F39EB6] text-sm font-medium mr-3 disabled:opacity-50"
                                                 >
-                                                    Approve
+                                                    {rescheduleActionId === req.id ? "…" : "Approve"}
                                                 </button>
                                                 <button
                                                     onClick={() => handleRescheduleAction(req.id, 'Rejected')}
-                                                    className="text-red-500 hover:text-red-700 text-sm font-medium"
+                                                    disabled={!!rescheduleActionId}
+                                                    className="text-red-500 hover:text-red-700 text-sm font-medium disabled:opacity-50"
                                                 >
                                                     Reject
                                                 </button>
                                             </>
                                         )}
+                                        {req.status === 'Pending' && !canReschedule && <span className="text-xs text-gray-500">No permission</span>}
                                     </td>
                                 </tr>
                             ))}

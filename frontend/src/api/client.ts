@@ -1,9 +1,10 @@
 /**
  * API client for KC Admin frontend.
  * Base URL is set via VITE_API_URL (e.g. your ngrok URL: https://xxxx.ngrok-free.app).
+ * On 401: tries refresh token once, then retries request; on refresh failure redirects to /login.
  */
 
-import { getAccessToken } from "../utils/auth";
+import { getAccessToken, getRefreshToken, setTokens, clearSession } from "../utils/auth";
 
 const getBaseURL = (): string => {
   const url = import.meta.env.VITE_API_URL;
@@ -15,6 +16,7 @@ const getBaseURL = (): string => {
 export const API_BASE_URL = getBaseURL();
 
 const baseURL = API_BASE_URL;
+const ADMIN_AUTH_REFRESH_PATH = "/api/v1/admin/auth/refresh";
 
 function getHeaders(extra?: HeadersInit): HeadersInit {
   const token = getAccessToken();
@@ -48,71 +50,126 @@ function parseJsonOrThrow<T>(text: string, path: string, status: number): T {
   }
 }
 
+/** In-flight refresh promise so concurrent 401s share one refresh. */
+let refreshPromise: Promise<boolean> | null = null;
+
+/** Try refresh token; store new tokens on success. Returns true if new tokens stored. */
+async function tryRefresh(): Promise<boolean> {
+  if (refreshPromise) return refreshPromise;
+  const refreshToken = getRefreshToken();
+  if (!refreshToken) {
+    clearSession();
+    window.location.href = "/login";
+    return false;
+  }
+  refreshPromise = (async () => {
+    try {
+      const res = await fetch(`${baseURL}${ADMIN_AUTH_REFRESH_PATH}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "ngrok-skip-browser-warning": "true",
+        },
+        body: JSON.stringify({ refreshToken }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data?.success && data?.data?.tokens) {
+        setTokens(data.data.tokens);
+        return true;
+      }
+    } finally {
+      refreshPromise = null;
+    }
+    clearSession();
+    window.location.href = "/login";
+    return false;
+  })();
+  return refreshPromise;
+}
+
+type RequestInitWithBody = RequestInit & { body?: string };
+async function fetchWithAuth(
+  path: string,
+  init: RequestInitWithBody,
+  isRetry = false
+): Promise<Response> {
+  const url = `${baseURL}${path.startsWith("/") ? path : `/${path}`}`;
+  const res = await fetch(url, {
+    ...init,
+    headers: getHeaders(init.headers),
+  });
+  if (res.status === 401 && !isRetry && path !== ADMIN_AUTH_REFRESH_PATH) {
+    const ok = await tryRefresh();
+    if (ok) return fetchWithAuth(path, init, true);
+  }
+  return res;
+}
+
+/** Error with HTTP status for callers that need to distinguish e.g. 409. */
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    public readonly status: number
+  ) {
+    super(message);
+    this.name = "ApiError";
+  }
+}
+
+function throwOnNotOk(res: Response, text: string): never {
+  const message = text || `Request failed (${res.status})`;
+  throw new ApiError(message, res.status);
+}
+
 /**
  * Simple fetch-based client that uses VITE_API_URL.
- * Sends Authorization: Bearer <token> when user is logged in.
+ * Sends Authorization: Bearer <token>; on 401 tries refresh once and retries.
  */
 export const api = {
   async get<T = unknown>(path: string, options?: RequestInit): Promise<T> {
-    const url = `${baseURL}${path.startsWith("/") ? path : `/${path}`}`;
-    const res = await fetch(url, {
-      ...options,
-      method: "GET",
-      headers: getHeaders(options?.headers),
-    });
+    const res = await fetchWithAuth(path, { ...options, method: "GET" });
     const text = await res.text().catch(() => res.statusText);
-    if (!res.ok) throw new Error(text || `Request failed (${res.status})`);
+    if (!res.ok) throwOnNotOk(res, text);
     return parseJsonOrThrow<T>(text, path, res.status);
   },
 
   async post<T = unknown>(path: string, body?: unknown, options?: RequestInit): Promise<T> {
-    const url = `${baseURL}${path.startsWith("/") ? path : `/${path}`}`;
-    const res = await fetch(url, {
+    const res = await fetchWithAuth(path, {
       ...options,
       method: "POST",
-      headers: getHeaders(options?.headers),
       body: body !== undefined ? JSON.stringify(body) : undefined,
     });
     const text = await res.text().catch(() => res.statusText);
-    if (!res.ok) throw new Error(text || `Request failed (${res.status})`);
+    if (!res.ok) throwOnNotOk(res, text);
     return parseJsonOrThrow<T>(text, path, res.status);
   },
 
   async patch<T = unknown>(path: string, body?: unknown, options?: RequestInit): Promise<T> {
-    const url = `${baseURL}${path.startsWith("/") ? path : `/${path}`}`;
-    const res = await fetch(url, {
+    const res = await fetchWithAuth(path, {
       ...options,
       method: "PATCH",
-      headers: getHeaders(options?.headers),
       body: body !== undefined ? JSON.stringify(body) : undefined,
     });
     const text = await res.text().catch(() => res.statusText);
-    if (!res.ok) throw new Error(text || `Request failed (${res.status})`);
+    if (!res.ok) throwOnNotOk(res, text);
     return parseJsonOrThrow<T>(text, path, res.status);
   },
 
   async put<T = unknown>(path: string, body?: unknown, options?: RequestInit): Promise<T> {
-    const url = `${baseURL}${path.startsWith("/") ? path : `/${path}`}`;
-    const res = await fetch(url, {
+    const res = await fetchWithAuth(path, {
       ...options,
       method: "PUT",
-      headers: getHeaders(options?.headers),
       body: body !== undefined ? JSON.stringify(body) : undefined,
     });
     const text = await res.text().catch(() => res.statusText);
-    if (!res.ok) throw new Error(text || `Request failed (${res.status})`);
+    if (!res.ok) throwOnNotOk(res, text);
     return parseJsonOrThrow<T>(text, path, res.status);
   },
 
   async delete<T = unknown>(path: string, options?: RequestInit): Promise<T> {
-    const url = `${baseURL}${path.startsWith("/") ? path : `/${path}`}`;
-    const res = await fetch(url, {
-      ...options,
-      method: "DELETE",
-      headers: getHeaders(options?.headers),
-    });
+    const res = await fetchWithAuth(path, { ...options, method: "DELETE" });
     const text = await res.text().catch(() => res.statusText);
-    if (!res.ok) throw new Error(text || `Request failed (${res.status})`);
+    if (!res.ok) throwOnNotOk(res, text);
     return parseJsonOrThrow<T>(text, path, res.status);
   },
 };

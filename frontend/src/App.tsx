@@ -11,23 +11,16 @@ import { FinanceView } from "./pages/FinanceView";
 import { SafetyView } from "./pages/SafetyView";
 import { CoursesView } from "./pages/CoursesView";
 import { SettingsView } from "./pages/SettingsView";
+import { AuditLogView } from "./pages/AuditLogView";
 import { AllocationsView } from "./pages/AllocationsView";
 import { SessionsView } from "./pages/SessionsView";
-import { INITIAL_STUDENTS, MOCK_TRAINERS } from "./data/mockData";
 import {
   ProtectedLayout,
   type AuthContextType,
 } from "./components/layout/ProtectedLayout";
-import type { Student, Trainer, ToastData } from "./types";
+import type { ToastData } from "./types";
 
 export default function App() {
-  // Lifted state for data persistence
-  const [students, setStudents] = useState<Student[]>(
-    INITIAL_STUDENTS as Student[]
-  );
-  const [trainers, setTrainers] = useState<Trainer[]>(
-    MOCK_TRAINERS as Trainer[]
-  );
   const [toasts, setToasts] = useState<ToastData[]>([]);
 
   const addToast = (message: string, type = "success") => {
@@ -39,54 +32,34 @@ export default function App() {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   };
 
-  // Wrapper components to pass props (since Route element expects a ReactNode)
   const DashboardWrapper = () => {
     const { user } = useOutletContext<AuthContextType>();
-    return <DashboardView user={user} students={students} />;
+    return <DashboardView user={user} />;
   };
 
   const AnalyticsWrapper = () => {
     const { user } = useOutletContext<AuthContextType>();
-    return (
-      <AnalyticsView user={user} students={students} trainers={trainers} />
-    );
+    return <AnalyticsView user={user} />;
   };
 
   const StudentsWrapper = () => {
     const { user } = useOutletContext<AuthContextType>();
-    return (
-      <StudentsView
-        user={user}
-        students={students}
-        setStudents={setStudents}
-        trainers={trainers}
-        setTrainers={setTrainers}
-        addToast={addToast}
-      />
-    );
+    return <StudentsView user={user} addToast={addToast} />;
   };
 
   const TrainersWrapper = () => {
     const { user } = useOutletContext<AuthContextType>();
-    return (
-      <TrainersView
-        user={user}
-        trainers={trainers}
-        setTrainers={setTrainers}
-        addToast={addToast}
-        students={students}
-      />
-    );
+    return <TrainersView user={user} addToast={addToast} />;
   };
 
   const RegionsWrapper = () => {
     const { user } = useOutletContext<AuthContextType>();
-    return <RegionsView user={user} students={students} trainers={trainers} />;
+    return <RegionsView user={user} />;
   };
 
   const FinanceWrapper = () => {
     const { user } = useOutletContext<AuthContextType>();
-    return <FinanceView user={user} students={students} />;
+    return <FinanceView user={user} />;
   };
 
   const SafetyWrapper = () => {
@@ -101,18 +74,23 @@ export default function App() {
 
   const SettingsWrapper = () => {
     const { user } = useOutletContext<AuthContextType>();
-    return <SettingsView user={user} />;
+    return <SettingsView user={user} addToast={addToast} />;
+  };
+
+  const AuditLogWrapper = () => {
+    const { user } = useOutletContext<AuthContextType>();
+    return <AuditLogView user={user} />;
   };
 
   // New Wrappers
   const AllocationsWrapper = () => {
     const { user } = useOutletContext<AuthContextType>();
-    return <AllocationsView user={user} />;
+    return <AllocationsView user={user} addToast={addToast} />;
   };
 
   const SessionsWrapper = () => {
     const { user } = useOutletContext<AuthContextType>();
-    return <SessionsView user={user} />;
+    return <SessionsView user={user} addToast={addToast} />;
   };
 
   return (
@@ -140,6 +118,7 @@ export default function App() {
           <Route path="/finance" element={<FinanceWrapper />} />
           <Route path="/safety" element={<SafetyWrapper />} />
           <Route path="/courses" element={<CoursesWrapper />} />
+          <Route path="/audit" element={<AuditLogWrapper />} />
           <Route path="/settings" element={<SettingsWrapper />} />
         </Route>
 
